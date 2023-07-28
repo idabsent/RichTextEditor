@@ -1,0 +1,23 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/filesave.png</file>
+        <file>icons/fileopen.png</file>
+        <file>icons/filenew.png</file>
+        <file>icons/editcopy.png</file>
+        <file>icons/editcut.png</file>
+        <file>icons/editpaste.png</file>
+        <file>icons/editredo.png</file>
+        <file>icons/editundo.png</file>
+        <file>icons/formatcolor.png</file>
+        <file>icons/formatunderlinecolor.png</file>
+        <file>icons/formatalignjustify.png</file>
+        <file>icons/formatalignleft.png</file>
+        <file>icons/formatalignright.png</file>
+        <file>icons/formatbold.png</file>
+        <file>icons/formatindent.png</file>
+        <file>icons/formatitalic.png</file>
+        <file>icons/formatunderline.png</file>
+        <file>icons/formatunindent.png</file>
+        <file>icons/formataligncenter.png</file>
+    </qresource>
+</RCC>
