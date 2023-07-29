@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <QByteArray>
 
 enum class ActionType : uint16_t
 {
@@ -17,15 +18,13 @@ enum class ActionType : uint16_t
     FormatUnderlineColor,
     FormatChecked,
 
+    FontSize,
+
     EditCopy,
     EditPaste,
     EditCut,
     EditRedo,
     EditUndo,
-
-    FileSave,
-    FileNew,
-    FileOpen,
 };
 
 struct Memento;
@@ -36,23 +35,27 @@ using ActionUP = std::unique_ptr<Action>;
 
 struct MementoBuilder
 {
-    virtual bool supportMemento(Memento* memento) = 0;
+    virtual ~MementoBuilder() = default;
+    virtual bool supportAction(ActionType action) const = 0;
     virtual ActionUP buildAction(MementoUP memento) = 0;
+    virtual MementoUP buildMemento(QByteArray&& data, ActionType action) = 0;
 };
 
 struct Action
 {
-    virtual void redo() = 0;
-    virtual void undo() = 0;
+    virtual ~Action() = default;
+    virtual void execute() = 0;
+
     virtual const Memento* getMemento() const = 0;
 
-private:
+protected:
     virtual void setMemento(MementoUP memento) = 0;
-
-    friend class MementoBuilder;
 };
 
 struct Memento
 {
-    virtual ActionType getActionType() = 0;
+    virtual ~Memento() = default;
+    virtual ActionType getActionType() const = 0;
+    virtual QByteArray toRaw() const = 0;
+    virtual void initFromRaw(QByteArray&& raw) = 0;
 };

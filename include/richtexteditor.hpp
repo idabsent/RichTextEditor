@@ -3,9 +3,9 @@
 #include <QMainWindow>
 #include <QTextEdit>
 
-struct RichText : public QMainWindow
+struct RichTextEditor : public QMainWindow
 {
-    RichText(QMainWindow* parent = nullptr);
+    RichTextEditor(QMainWindow* parent = nullptr);
 
     void buildUi();
 

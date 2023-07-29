@@ -31,7 +31,7 @@ auto main(int argc, char* argv[]) -> int
 
     cliParser.process(app);
 
-    RichText win;
+    RichTextEditor win;
     win.buildUi();
     win.show();
 

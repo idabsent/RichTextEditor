@@ -7,11 +7,11 @@
 #include <algorithm>
 #include <iterator>
 
-RichText::RichText(QMainWindow* parent)
+RichTextEditor::RichTextEditor(QMainWindow* parent)
     : m_textEditor{nullptr}
 {   }
 
-void RichText::buildUi()
+void RichTextEditor::buildUi()
 {
     setupFileActions();
     setupEditActions();
@@ -21,7 +21,7 @@ void RichText::buildUi()
     buildEditor();
 }
 
-void RichText::setupFileActions()
+void RichTextEditor::setupFileActions()
 {
     MenuBarBuilder builder{this, tr("File actions"), tr("File")};
 
@@ -48,7 +48,7 @@ void RichText::setupFileActions()
         .createAction(tr("Quit"));
 }
 
-void RichText::setupEditActions()
+void RichTextEditor::setupEditActions()
 {
     MenuBarBuilder builder{ this, tr("Edit actions"), tr("Edit") };
 
@@ -74,7 +74,7 @@ void RichText::setupEditActions()
         .createAction(tr("&Paste"));
 }
 
-void RichText::setupFormatActions()
+void RichTextEditor::setupFormatActions()
 {
     MenuBarBuilder builder{ this, tr("Format actions"), tr("Format") };
 
@@ -117,7 +117,7 @@ void RichText::setupFormatActions()
         .createAction(tr("Unindent"));
 }
 
-void RichText::setupFontSelectorToolBar()
+void RichTextEditor::setupFontSelectorToolBar()
 {
     auto fontSelectorToolBar = addToolBar(tr("Font selector"));
     
@@ -160,7 +160,7 @@ void RichText::setupFontSelectorToolBar()
 
 }
 
-void RichText::buildEditor()
+void RichTextEditor::buildEditor()
 {
     m_textEditor = new QTextEdit;
     setCentralWidget(m_textEditor);

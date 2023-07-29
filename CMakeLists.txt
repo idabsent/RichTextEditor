@@ -24,7 +24,7 @@ set(TS_FILES
 set(HEADER_FILES
     include/richtexteditor.hpp
     include/menubarbuilder.hpp
-    include/formats.hpp
+    include/actions.hpp
     include/config.in
 )
 
@@ -32,6 +32,8 @@ set(SOURCE_FILES
     src/main.cpp
     src/richtexteditor.cpp
     src/menubarbuilder.cpp
+    src/texteditoractions.cpp
+    src/formatactions.cpp
 )
 
 qt5_add_translation(QM_FILES ${TS_FILES})
