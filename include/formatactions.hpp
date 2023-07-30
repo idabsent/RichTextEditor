@@ -5,45 +5,9 @@
 #include <QColor>
 #include <QDataStream>
 
-template<typename Item>
-struct OneItemMemento : public Memento
+struct BoldMemento : public StreamItemsMemento<int, bool>
 {
-	OneItemMemento(Item item)
-		: m_item{std::move(item)}
-	{	}
-
-	QByteArray toRaw() const override
-	{
-		QByteArray raw;
-		QDataStream rawStream{ &raw, QIODevice::WriteOnly };
-		rawStream << m_item;
-		return raw;
-	}
-
-	void initFromRaw(QByteArray&& raw) override
-	{
-		QDataStream rawStream{ &raw, QIODevice::ReadOnly };
-		rawStream >> m_item;
-	}
-
-protected:
-	Item m_item;
-};
-
-struct EmptyMemento : public Memento
-{
-	QByteArray toRaw() const override
-	{
-		return QByteArray{};
-	}
-
-	void initFromRaw(QByteArray&& raw) override
-	{	}
-};
-
-struct BoldMemento : public OneItemMemento<bool>
-{
-	BoldMemento(bool isBold);
+	BoldMemento(QTextCursor const& cursor, bool isBold);
 
 	ActionType getActionType() const override;
 
@@ -64,9 +28,9 @@ private:
 	BoldMementoUP m_memento;
 };
 
-struct ItalicMemento : public OneItemMemento<bool>
+struct ItalicMemento : public StreamItemsMemento<int, bool>
 {
-	ItalicMemento(bool isItalic);
+	ItalicMemento(QTextCursor const& cursor, bool isItalic);
 
 	ActionType getActionType() const override;
 
@@ -89,9 +53,9 @@ private:
 	ItalicMementoUP m_memento;
 };
 
-struct UnderlineMemento : public OneItemMemento<bool>
+struct UnderlineMemento : public StreamItemsMemento<int, bool>
 {
-	UnderlineMemento(bool isUnderline);
+	UnderlineMemento(QTextCursor const& cursor, bool isUnderline);
 
 	ActionType getActionType() const override;
 
@@ -114,93 +78,9 @@ private:
 	UnderlineMementoUP m_memento;
 };
 
-struct AlignLeftMemento : public EmptyMemento
+struct ColorMemento : public StreamItemsMemento<int, QColor>
 {
-	ActionType getActionType() const override;
-};
-
-using AlignLeftMementoUP = std::unique_ptr<AlignLeftMemento, std::default_delete<Memento>>;
-
-struct FormatAlignLeft : public TextEditorFormatAction
-{
-	using TextEditorFormatAction::TextEditorFormatAction;
-
-	QTextCharFormat createCharFormat() const override;
-	const Memento* getMemento() const override;
-
-protected:
-	void setMemento(MementoUP memento) override;
-
-private:
-	AlignLeftMementoUP m_memento;
-};
-
-struct AlignCenterMemento : public EmptyMemento
-{
-	ActionType getActionType() const override;
-};
-
-using AlignCenterMementoUP = std::unique_ptr<AlignCenterMemento, std::default_delete<Memento>>;
-
-struct FormatAlignCenter : public TextEditorFormatAction
-{
-	using TextEditorFormatAction::TextEditorFormatAction;
-
-	QTextCharFormat createCharFormat() const override;
-	const Memento* getMemento() const override;
-
-protected:
-	void setMemento(MementoUP memento) override;
-
-private:
-	AlignCenterMementoUP m_memento;
-};
-
-struct AlignRightMemento : public EmptyMemento
-{
-	ActionType getActionType() const override;
-};
-
-using AlignRightMementoUP = std::unique_ptr<AlignRightMemento, std::default_delete<Memento>>;
-
-struct FormatAlignRight : public TextEditorFormatAction
-{
-	using TextEditorFormatAction::TextEditorFormatAction;
-
-	QTextCharFormat createCharFormat() const override;
-	const Memento* getMemento() const override;
-
-protected:
-	void setMemento(MementoUP memento) override;
-
-private:
-	AlignRightMementoUP m_memento;
-};
-
-struct AlignJustifyMemento : public EmptyMemento
-{
-	ActionType getActionType() const override;
-};
-
-using AlignJustifyMementoUP = std::unique_ptr<AlignJustifyMemento, std::default_delete<Memento>>;
-
-struct FormatAlignJustify : public TextEditorFormatAction
-{
-	using TextEditorFormatAction::TextEditorFormatAction;
-
-	QTextCharFormat createCharFormat() const override;
-	const Memento* getMemento() const override;
-
-protected:
-	void setMemento(MementoUP memento) override;
-
-private:
-	AlignJustifyMementoUP m_memento;
-};
-
-struct ColorMemento : public OneItemMemento<QColor>
-{
-	ColorMemento(QColor color);
+	ColorMemento(QTextCursor const& cursor, QColor color);
 
 	ActionType getActionType() const;
 
@@ -223,9 +103,9 @@ private:
 	ColorMementoUP m_memento;
 };
 
-struct UnderlineColorMemento : public OneItemMemento<QColor>
+struct UnderlineColorMemento : public StreamItemsMemento<int, QColor>
 {
-	UnderlineColorMemento(QColor color);
+	UnderlineColorMemento(QTextCursor const& cursor, QColor color);
 
 	ActionType getActionType() const;
 
@@ -248,9 +128,9 @@ private:
 	UnderlineColorMementoUP m_memento;
 };
 
-struct SizeMemento : public OneItemMemento<int>
+struct SizeMemento : public StreamItemsMemento<int, int>
 {
-	SizeMemento(int size);
+	SizeMemento(QTextCursor const& cursor, int size);
 
 	ActionType getActionType() const override;
 

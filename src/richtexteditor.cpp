@@ -1,5 +1,6 @@
 #include "richtexteditor.hpp"
 #include "menubarbuilder.hpp"
+#include "dbussession.hpp"
 
 #include <QComboBox>
 #include <QFontComboBox>
@@ -164,4 +165,10 @@ void RichTextEditor::buildEditor()
 {
     m_textEditor = new QTextEdit;
     setCentralWidget(m_textEditor);
+
+    connect(m_textEditor, &QTextEdit::textChanged, this, [this]
+        {
+            DBusSession::instance()->sendEvent(m_textEditor->toPlainText());
+        }
+    );
 }

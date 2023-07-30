@@ -35,13 +35,25 @@ bool TextEditorFormatMementoBuilder::supportAction(ActionType action) const
 //TODO enable support other action mementos
 MementoUP TextEditorFormatMementoBuilder::buildMemento(QByteArray&& data, ActionType action)
 {
-	QDataStream dataStream{ &data, QIODevice::ReadOnly };
+	MementoUP memento;
 
-	int pos{ -1 };
+	switch (action)
+	{
+	case ActionType::FormatBold:
+	case ActionType::FormatItalic:
+	case ActionType::FormatUnderline:
+	case ActionType::FormatAlignLeft:
+	case ActionType::FormatAlignRight:
+	case ActionType::FormatAlignCenter:
+	case ActionType::FormatAlignJustify:
+	case ActionType::FormatIndent:
+	case ActionType::FormatUnindent:
+	case ActionType::FormatColor:
+	case ActionType::FormatUnderlineColor:
+	case ActionType::FormatChecked:
+		break;
+	}
 
-	dataStream >> pos;
-
-	//return std::make_unique<TextEditorFormatMemento>(pos, action);
 	return MementoUP{ nullptr };
 }
 
@@ -128,7 +140,7 @@ TextEditorFormatIndentAction::TextEditorFormatIndentAction(int indent, QTextEdit
 	, m_memento{std::make_unique<TextEditorFormatIndentMemento>(textEditor->textCursor(), indent)}
 {	}
 
-//TODO implement action
+//TODO
 void TextEditorFormatIndentAction::execute()
 {
 	
@@ -201,4 +213,121 @@ const Memento* TextEditorFormatCheckedAction::getMemento() const
 void TextEditorFormatCheckedAction::setMemento(MementoUP memento)
 {
 	m_memento = std::move(memento);
+}
+
+
+ActionType AlignLeftMemento::getActionType() const
+{
+	return ActionType::FormatAlignLeft;
+}
+
+//TODO
+void FormatAlignLeft::execute()
+{
+
+}
+
+const Memento* FormatAlignLeft::getMemento() const
+{
+	return m_memento.get();
+}
+
+void FormatAlignLeft::setMemento(MementoUP memento)
+{
+	auto casted = tools::unique_dyn_cast<AlignLeftMemento>(std::move(memento));
+
+	if (casted)
+	{
+		m_memento = std::move(casted);
+		return;
+	}
+
+	throwInvalidMemento(memento);
+}
+
+ActionType AlignCenterMemento::getActionType() const
+{
+	return ActionType::FormatAlignCenter;
+}
+
+//TODO
+void FormatAlignCenter::execute() 
+{
+
+}
+
+const Memento* FormatAlignCenter::getMemento() const
+{
+	return m_memento.get();
+}
+
+void FormatAlignCenter::setMemento(MementoUP memento)
+{
+	auto casted = tools::unique_dyn_cast<AlignCenterMemento>(std::move(memento));
+
+	if (casted)
+	{
+		m_memento = std::move(casted);
+		return;
+	}
+
+	throwInvalidMemento(memento);
+}
+
+ActionType AlignRightMemento::getActionType() const
+{
+	return ActionType::FormatAlignRight;
+}
+
+//TODO
+void FormatAlignRight::execute()
+{
+
+}
+
+const Memento* FormatAlignRight::getMemento() const
+{
+	return m_memento.get();
+}
+
+void FormatAlignRight::setMemento(MementoUP memento)
+{
+	auto casted = tools::unique_dyn_cast<AlignRightMemento>(std::move(memento));
+
+	if (casted)
+	{
+		m_memento = std::move(casted);
+		return;
+	}
+
+	throwInvalidMemento(memento);
+}
+
+ActionType AlignJustifyMemento::getActionType() const
+{
+	return ActionType::FormatAlignJustify;
+}
+
+//TODO
+void FormatAlignJustify::execute()
+{
+
+}
+
+const Memento* FormatAlignJustify::getMemento() const
+{
+	return m_memento.get();
+}
+
+void FormatAlignJustify::setMemento(MementoUP memento)
+{
+	auto casted = tools::unique_dyn_cast<AlignJustifyMemento>(std::move(memento));
+
+	if (casted)
+	{
+		m_memento = std::move(casted);
+		return;
+	}
+
+	throwInvalidMemento(memento);
 }

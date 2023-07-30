@@ -1,5 +1,5 @@
 #include "richtexteditor.hpp"
-
+#include "dbussession.hpp"
 #include "config.h"
 
 #include <QApplication>
@@ -30,6 +30,8 @@ auto main(int argc, char* argv[]) -> int
     cliParser.addVersionOption();
 
     cliParser.process(app);
+
+    DBusSession::createInstance("...");
 
     RichTextEditor win;
     win.buildUi();

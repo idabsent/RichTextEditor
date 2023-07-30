@@ -1,8 +1,14 @@
 #pragma once
 
 #include <memory>
+#include <type_traits>
+#include <tuple>
+#include <exception>
+#include <string>
 
-#define typeName(Val) std::string{typeid(Val).name()}
+#define toolsTypeName(Val) std::string{typeid(Val).name()}
+#define throwInvalidMemento(memento) \
+	throw std::runtime_error{std::string{FUNC_SIGN} + std::string{" | Received invalid memento type: "} + toolsTypeName(memento.get())};
 
 #if defined(_MSC_VER)
 #define FUNC_SIGN __FUNCSIG__
@@ -24,6 +30,34 @@ std::unique_ptr<To, Deleter> unique_dyn_cast(std::unique_ptr<From, Deleter>&& pt
 	}
 
 	return std::unique_ptr<To>(nullptr);
+}
+
+//TODO fix it
+template<size_t Ind = 0, typename... TItems, typename Func>
+typename std::enable_if<Ind == sizeof...(TItems), void>::type tuple_for_each(std::tuple<TItems...>& items, Func func)
+{
+
+}
+
+template<size_t Ind = 0, typename... TItems, typename Func>
+typename std::enable_if<Ind < sizeof...(TItems), void>::type tuple_for_each(std::tuple<TItems...>& items, Func func)
+{
+	func(std::get<Ind>(items));
+	tuple_for_each<Ind + 1, TItems..., Func>(items, func);
+}
+
+//TODO fix it
+template<size_t Ind = 0, typename... TItems, typename Func>
+typename std::enable_if<Ind == sizeof...(TItems), void>::type tuple_for_each(std::tuple<TItems...> const& items, Func func)
+{
+
+}
+
+template<size_t Ind = 0, typename... TItems, typename Func>
+typename std::enable_if < Ind < sizeof...(TItems), void>::type tuple_for_each(std::tuple<TItems...> const& items, Func func)
+{
+	func(std::get<Ind>(items));
+	tuple_for_each<Ind + 1, TItems..., Func>(items, func);
 }
 
 }

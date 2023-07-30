@@ -2,11 +2,8 @@
 
 #include "tools.hpp"
 
-#define throwInvalidMemento(memento) \
-	throw std::runtime_error{std::string{FUNC_SIGN} + std::string{" | Received invalid memento type: "} + typeName(memento.get())};
-
-BoldMemento::BoldMemento(bool isBold)
-	: OneItemMemento{isBold}
+BoldMemento::BoldMemento(QTextCursor const& cursor, bool isBold)
+	: StreamItemsMemento{ cursor.position(), isBold }
 {	}
 
 ActionType BoldMemento::getActionType() const
@@ -16,13 +13,13 @@ ActionType BoldMemento::getActionType() const
 
 FormatBold::FormatBold(bool isBold, QTextEdit* textEditor)
 	: TextEditorFormatAction{textEditor}
-	, m_memento{std::make_unique<BoldMemento>(isBold)}
+	, m_memento{std::make_unique<BoldMemento>(textEditor->textCursor(), isBold)}
 {	}
 
 QTextCharFormat FormatBold::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontWeight(m_memento->m_item ? QFont::Bold : QFont::Normal);
+	fmt.setFontWeight(std::get<1>(m_memento->m_items) ? QFont::Bold : QFont::Normal);
 	return fmt;
 }
 
@@ -43,8 +40,8 @@ void FormatBold::setMemento(MementoUP memento)
 
 }
 
-ItalicMemento::ItalicMemento(bool isItalic)
-	: OneItemMemento{isItalic}
+ItalicMemento::ItalicMemento(QTextCursor const& cursor, bool isItalic)
+	: StreamItemsMemento{cursor.position(), isItalic}
 {	}
 
 ActionType ItalicMemento::getActionType() const
@@ -54,13 +51,13 @@ ActionType ItalicMemento::getActionType() const
 
 FormatItalic::FormatItalic(bool isItalic, QTextEdit* textEditor)
 	: TextEditorFormatAction{ textEditor }
-	, m_memento{std::make_unique<ItalicMemento>(isItalic)}
+	, m_memento{std::make_unique<ItalicMemento>(textEditor->textCursor(), isItalic)}
 {	}
 
 QTextCharFormat FormatItalic::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontItalic(m_memento->m_item);
+	fmt.setFontItalic(std::get<1>(m_memento->m_items));
 	return fmt;
 }
 
@@ -82,8 +79,8 @@ void FormatItalic::setMemento(MementoUP memento)
 	throwInvalidMemento(memento);
 }
 
-UnderlineMemento::UnderlineMemento(bool isUnderline)
-	: OneItemMemento{isUnderline}
+UnderlineMemento::UnderlineMemento(QTextCursor const& cursor, bool isUnderline)
+	: StreamItemsMemento{cursor.position(), isUnderline}
 {	}
 
 ActionType UnderlineMemento::getActionType() const
@@ -93,13 +90,13 @@ ActionType UnderlineMemento::getActionType() const
 
 FormatUnderline::FormatUnderline(bool isUnderline, QTextEdit* textEditor)
 	: TextEditorFormatAction{textEditor}
-	, m_memento{std::make_unique<UnderlineMemento>(isUnderline)}
+	, m_memento{std::make_unique<UnderlineMemento>(textEditor->textCursor(), isUnderline)}
 {	}
 
 QTextCharFormat FormatUnderline::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontUnderline(m_memento->m_item);
+	fmt.setFontUnderline(std::get<1>(m_memento->m_items));
 	return fmt;
 }
 
@@ -121,125 +118,13 @@ void FormatUnderline::setMemento(MementoUP memento)
 	throwInvalidMemento(memento);
 }
 
-ActionType AlignLeftMemento::getActionType() const
-{
-	return ActionType::FormatAlignLeft;
-}
-
-QTextCharFormat FormatAlignLeft::createCharFormat() const
-{
-	return QTextCharFormat{};
-}
-
-const Memento* FormatAlignLeft::getMemento() const
-{
-	return m_memento.get();
-}
-
-void FormatAlignLeft::setMemento(MementoUP memento)
-{
-	auto casted = tools::unique_dyn_cast<AlignLeftMemento>(std::move(memento));
-
-	if (casted)
-	{
-		m_memento = std::move(casted);
-		return;
-	}
-
-	throwInvalidMemento(memento);
-}
-
-ActionType AlignCenterMemento::getActionType() const
-{
-	return ActionType::FormatAlignCenter;
-}
-
-QTextCharFormat FormatAlignCenter::createCharFormat() const
-{
-	return QTextCharFormat{};
-}
-
-const Memento* FormatAlignCenter::getMemento() const
-{
-	return m_memento.get();
-}
-
-void FormatAlignCenter::setMemento(MementoUP memento)
-{
-	auto casted = tools::unique_dyn_cast<AlignCenterMemento>(std::move(memento));
-
-	if (casted)
-	{
-		m_memento = std::move(casted);
-		return;
-	}
-
-	throwInvalidMemento(memento);
-}
-
-ActionType AlignRightMemento::getActionType() const
-{
-	return ActionType::FormatAlignRight;
-}
-
-QTextCharFormat FormatAlignRight::createCharFormat() const
-{
-	return QTextCharFormat{};
-}
-
-const Memento* FormatAlignRight::getMemento() const
-{
-	return m_memento.get();
-}
-
-void FormatAlignRight::setMemento(MementoUP memento)
-{
-	auto casted = tools::unique_dyn_cast<AlignRightMemento>(std::move(memento));
-
-	if (casted)
-	{
-		m_memento = std::move(casted);
-		return;
-	}
-
-	throwInvalidMemento(memento);
-}
-
-ActionType AlignJustifyMemento::getActionType() const
-{
-	return ActionType::FormatAlignJustify;
-}
-
-QTextCharFormat FormatAlignJustify::createCharFormat() const
-{
-	return QTextCharFormat{};
-}
-
-const Memento* FormatAlignJustify::getMemento() const
-{
-	return m_memento.get();
-}
-
-void FormatAlignJustify::setMemento(MementoUP memento)
-{
-	auto casted = tools::unique_dyn_cast<AlignJustifyMemento>(std::move(memento));
-
-	if (casted)
-	{
-		m_memento = std::move(casted);
-		return;
-	}
-
-	throwInvalidMemento(memento);
-}
-
 FormatColor::FormatColor(QColor color, QTextEdit* textEditor)
 	: TextEditorFormatAction{ textEditor }
-	, m_memento{ std::make_unique<ColorMemento>(color) }
+	, m_memento{ std::make_unique<ColorMemento>(textEditor->textCursor(), color) }
 {	}
 
-ColorMemento::ColorMemento(QColor color)
-	: OneItemMemento{color}
+ColorMemento::ColorMemento(QTextCursor const& cursor, QColor color)
+	: StreamItemsMemento{cursor.position(), color}
 {	}
 
 ActionType ColorMemento::getActionType() const
@@ -250,7 +135,7 @@ ActionType ColorMemento::getActionType() const
 QTextCharFormat FormatColor::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setForeground(m_memento->m_item);
+	fmt.setForeground(std::get<1>(m_memento->m_items));
 	return fmt;
 }
 
@@ -272,8 +157,8 @@ void FormatColor::setMemento(MementoUP memento)
 	throwInvalidMemento(memento);
 }
 
-UnderlineColorMemento::UnderlineColorMemento(QColor color)
-	: OneItemMemento{color}
+UnderlineColorMemento::UnderlineColorMemento(QTextCursor const& cursor, QColor color)
+	: StreamItemsMemento{cursor.position(), color}
 {	}
 
 ActionType UnderlineColorMemento::getActionType() const
@@ -283,14 +168,14 @@ ActionType UnderlineColorMemento::getActionType() const
 
 FormatUnderlineColor::FormatUnderlineColor(QColor color, QTextEdit* textEditor)
 	: TextEditorFormatAction{textEditor}
-	, m_memento{std::make_unique<UnderlineColorMemento>(color)}
+	, m_memento{std::make_unique<UnderlineColorMemento>(textEditor->textCursor(), color)}
 {	}
 
 
 QTextCharFormat FormatUnderlineColor::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setUnderlineColor(m_memento->m_item);
+	fmt.setUnderlineColor(std::get<1>(m_memento->m_items));
 	return fmt;
 }
 
@@ -312,8 +197,8 @@ void FormatUnderlineColor::setMemento(MementoUP memento)
 	throwInvalidMemento(memento);
 }
 
-SizeMemento::SizeMemento(int size)
-	: OneItemMemento{size}
+SizeMemento::SizeMemento(QTextCursor const& cursor, int size)
+	: StreamItemsMemento{cursor.position(), size}
 {	}
 
 ActionType SizeMemento::getActionType() const
@@ -323,13 +208,13 @@ ActionType SizeMemento::getActionType() const
 
 FormatSize::FormatSize(int size, QTextEdit* textEditor)
 	: TextEditorFormatAction{textEditor}
-	, m_memento{std::make_unique<SizeMemento>(size)}
+	, m_memento{std::make_unique<SizeMemento>(textEditor->textCursor(), size)}
 {	}
 
 QTextCharFormat FormatSize::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontPointSize(m_memento->m_item);
+	fmt.setFontPointSize(std::get<1>(m_memento->m_items));
 	return fmt;
 }
 

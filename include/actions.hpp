@@ -45,7 +45,6 @@ struct Action
 {
     virtual ~Action() = default;
     virtual void execute() = 0;
-
     virtual const Memento* getMemento() const = 0;
 
 protected:
