@@ -1,5 +1,6 @@
 #include "menubarbuilder.hpp"
 #include "tools.hpp"
+#include "dbussession.hpp"
 
 #include <QMenuBar>
 #include <QDebug>
@@ -85,7 +86,8 @@ QAction* MenuBarBuilder::createAction(QString const& name, ExecuteAction fn)
         if (auto actionObject = fn(action))
         {
             actionObject->execute();
-            delete actionObject;
+            std::unique_ptr<Action> action{actionObject};
+            DBusSession::instance()->sendAction(std::move(action));
         }
     });
 

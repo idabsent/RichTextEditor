@@ -63,10 +63,10 @@ MementoUP GlobalMementoBuilder::buildMemento(QByteArray&& data, ActionType actio
 	case ActionType::FormatAlignJustify:
         memento.reset(new AlignJustifyMemento);
         break;
-	case ActionType::FormatIndent:
-        //memento.reset()
-        break;
+    case ActionType::FormatIndent:
 	case ActionType::FormatUnindent:
+        memento.reset(new IndentMemento);
+        break;
 	case ActionType::FormatColor:
         memento.reset(new ColorMemento);
         break;
@@ -241,15 +241,23 @@ void FormatAction::execute()
 
 void FormatAction::mergeFormat(QTextCharFormat const& fmt)
 {
-    auto m_pos = pos();
-    auto cursor = m_editor->textCursor();
-    cursor.movePosition(QTextCursor::Start);
-    cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, m_pos);
+    auto m_posBegin = posBegin();
+    auto m_posEnd = posEnd();
 
-	if (!cursor.hasSelection())
-	{
-		cursor.select(QTextCursor::WordUnderCursor);
-	}
+    auto cursor = m_editor->textCursor();
+
+    if (m_posBegin == m_posEnd)
+    {
+        cursor.select(QTextCursor::WordUnderCursor);
+    }
+    else
+    {
+        cursor.movePosition(QTextCursor::Start);
+        cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, m_posBegin);
+        cursor.selectionStart();
+        cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, m_posEnd);
+        cursor.selectionEnd();
+    }
 
 	cursor.mergeCharFormat(fmt);
 	m_editor->mergeCurrentCharFormat(fmt);

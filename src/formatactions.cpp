@@ -5,8 +5,8 @@
 #include <QDebug>
 
 BoldMemento::BoldMemento(QTextCursor const& cursor, bool isBold)
-	: StreamItemsMemento{ cursor.position(), isBold }
-{	}
+    : StreamItemsMemento{ cursor.selectionStart(), cursor.selectionEnd(), isBold }
+{   }
 
 ActionType BoldMemento::getActionType() const
 {
@@ -23,15 +23,20 @@ FormatBold::FormatBold(bool isBold, QTextEdit* textEditor)
 	, m_memento{std::make_unique<BoldMemento>(textEditor->textCursor(), isBold)}
 {	}
 
-int FormatBold::pos() const
+int FormatBold::posBegin() const
 {
     return std::get<0>(m_memento->m_items);
+}
+
+int FormatBold::posEnd() const
+{
+    return std::get<1>(m_memento->m_items);
 }
 
 QTextCharFormat FormatBold::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontWeight(std::get<1>(m_memento->m_items) ? QFont::Bold : QFont::Normal);
+    fmt.setFontWeight(std::get<2>(m_memento->m_items) ? QFont::Bold : QFont::Normal);
 	return fmt;
 }
 
@@ -53,7 +58,7 @@ void FormatBold::setMemento(MementoUP memento)
 }
 
 ItalicMemento::ItalicMemento(QTextCursor const& cursor, bool isItalic)
-	: StreamItemsMemento{cursor.position(), isItalic}
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd(), isItalic}
 {	}
 
 ActionType ItalicMemento::getActionType() const
@@ -71,15 +76,20 @@ FormatItalic::FormatItalic(bool isItalic, QTextEdit* textEditor)
 	, m_memento{std::make_unique<ItalicMemento>(textEditor->textCursor(), isItalic)}
 {	}
 
-int FormatItalic::pos() const
+int FormatItalic::posBegin() const
 {
     return std::get<0>(m_memento->m_items);
+}
+
+int FormatItalic::posEnd() const
+{
+    return std::get<1>(m_memento->m_items);
 }
 
 QTextCharFormat FormatItalic::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontItalic(std::get<1>(m_memento->m_items));
+    fmt.setFontItalic(std::get<2>(m_memento->m_items));
 	return fmt;
 }
 
@@ -102,7 +112,7 @@ void FormatItalic::setMemento(MementoUP memento)
 }
 
 UnderlineMemento::UnderlineMemento(QTextCursor const& cursor, bool isUnderline)
-	: StreamItemsMemento{cursor.position(), isUnderline}
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd(), isUnderline}
 {	}
 
 ActionType UnderlineMemento::getActionType() const
@@ -120,15 +130,20 @@ FormatUnderline::FormatUnderline(bool isUnderline, QTextEdit* textEditor)
 	, m_memento{std::make_unique<UnderlineMemento>(textEditor->textCursor(), isUnderline)}
 {	}
 
-int FormatUnderline::pos() const
+int FormatUnderline::posBegin() const
 {
     return std::get<0>(m_memento->m_items);
+}
+
+int FormatUnderline::posEnd() const
+{
+    return std::get<1>(m_memento->m_items);
 }
 
 QTextCharFormat FormatUnderline::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontUnderline(std::get<1>(m_memento->m_items));
+    fmt.setFontUnderline(std::get<2>(m_memento->m_items));
 	return fmt;
 }
 
@@ -161,7 +176,7 @@ FormatColor::FormatColor(QColor color, QTextEdit* textEditor)
 {	}
 
 ColorMemento::ColorMemento(QTextCursor const& cursor, QColor color)
-	: StreamItemsMemento{cursor.position(), color}
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd(), color}
 {	}
 
 ActionType ColorMemento::getActionType() const
@@ -169,15 +184,20 @@ ActionType ColorMemento::getActionType() const
 	return ActionType::FormatColor;
 }
 
-int FormatColor::pos() const
+int FormatColor::posBegin() const
 {
     return std::get<0>(m_memento->m_items);
+}
+
+int FormatColor::posEnd() const
+{
+    return std::get<1>(m_memento->m_items);
 }
 
 QTextCharFormat FormatColor::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setForeground(std::get<1>(m_memento->m_items));
+    fmt.setForeground(std::get<2>(m_memento->m_items));
 	return fmt;
 }
 
@@ -200,7 +220,7 @@ void FormatColor::setMemento(MementoUP memento)
 }
 
 UnderlineColorMemento::UnderlineColorMemento(QTextCursor const& cursor, QColor color)
-	: StreamItemsMemento{cursor.position(), color}
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd(), color}
 {	}
 
 ActionType UnderlineColorMemento::getActionType() const
@@ -218,15 +238,20 @@ FormatUnderlineColor::FormatUnderlineColor(QColor color, QTextEdit* textEditor)
 	, m_memento{std::make_unique<UnderlineColorMemento>(textEditor->textCursor(), color)}
 {	}
 
-int FormatUnderlineColor::pos() const
+int FormatUnderlineColor::posBegin() const
 {
     return std::get<0>(m_memento->m_items);
+}
+
+int FormatUnderlineColor::posEnd() const
+{
+    return std::get<1>(m_memento->m_items);
 }
 
 QTextCharFormat FormatUnderlineColor::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setUnderlineColor(std::get<1>(m_memento->m_items));
+    fmt.setUnderlineColor(std::get<2>(m_memento->m_items));
 	return fmt;
 }
 
@@ -249,7 +274,7 @@ void FormatUnderlineColor::setMemento(MementoUP memento)
 }
 
 SizeMemento::SizeMemento(QTextCursor const& cursor, int size)
-	: StreamItemsMemento{cursor.position(), size}
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd(), size}
 {	}
 
 ActionType SizeMemento::getActionType() const
@@ -267,15 +292,20 @@ FormatSize::FormatSize(int size, QTextEdit* textEditor)
 	, m_memento{std::make_unique<SizeMemento>(textEditor->textCursor(), size)}
 {	}
 
-int FormatSize::pos() const
+int FormatSize::posBegin() const
 {
     return std::get<0>(m_memento->m_items);
+}
+
+int FormatSize::posEnd() const
+{
+    return std::get<1>(m_memento->m_items);
 }
 
 QTextCharFormat FormatSize::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontPointSize(std::get<1>(m_memento->m_items));
+    fmt.setFontPointSize(std::get<2>(m_memento->m_items));
 	return fmt;
 }
 
@@ -298,7 +328,7 @@ void FormatSize::setMemento(MementoUP memento)
 }
 
 FamilyMemento::FamilyMemento(QTextCursor const& cursor, QString const& family)
-	: StreamItemsMemento{cursor.position(), family}
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd(), family}
 {	}
 
 ActionType FamilyMemento::getActionType() const
@@ -316,15 +346,20 @@ FormatFamily::FormatFamily(QString const& family, QTextEdit* textEditor)
 	, m_memento{ std::make_unique<FamilyMemento>(textEditor->textCursor(), family) }
 {	}
 
-int FormatFamily::pos() const
+int FormatFamily::posBegin() const
 {
     return std::get<0>(m_memento->m_items);
+}
+
+int FormatFamily::posEnd() const
+{
+    return std::get<1>(m_memento->m_items);
 }
 
 QTextCharFormat FormatFamily::createCharFormat() const
 {
 	QTextCharFormat fmt;
-	fmt.setFontFamily(std::get<1>(m_memento->m_items));
+    fmt.setFontFamily(std::get<2>(m_memento->m_items));
 	return fmt;
 }
 

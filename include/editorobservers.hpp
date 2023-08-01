@@ -29,7 +29,7 @@ struct TextChangeObserver : public QObject
 
 public slots:
 	void onSymAdded(QChar const& sym);
-	void onSymRemoved(QChar const& sym);
+    void onSymRemoved(QChar const& sym);
 
 private:
 	Q_OBJECT

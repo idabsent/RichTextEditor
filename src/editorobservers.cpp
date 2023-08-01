@@ -26,7 +26,7 @@ QChar AdditionalEmiterTextEditor::previousChar()
 
 void AdditionalEmiterTextEditor::keyReleaseEvent(QKeyEvent* event)
 {
-	if (!event->text().isEmpty() && event->text().front().isPrint())
+    if (!event->text().isEmpty() && event->text().front().isPrint())
 	{
 		emit symAdded(previousChar());
 	}
@@ -58,25 +58,25 @@ TextChangeObserver::TextChangeObserver(AdditionalEmiterTextEditor* textEditor, s
 	, m_editor{textEditor}
 {
 	connect(m_editor, &AdditionalEmiterTextEditor::symAdded, this, &TextChangeObserver::onSymAdded);
-	connect(m_editor, &AdditionalEmiterTextEditor::symRemoved, this, &TextChangeObserver::onSymRemoved);
+    connect(m_editor, &AdditionalEmiterTextEditor::symRemoved, this, &TextChangeObserver::onSymRemoved);
 }
 
 void TextChangeObserver::onSymAdded(QChar const& sym)
 {
-	auto dbusSession = DBusSession::instance();
-	auto action = std::unique_ptr<Action>{ 
-		new TextChangeAction{ TextChangeType::Added, sym, m_editor } 
-	};
-	dbusSession->sendAction(std::move(action));
+    auto dbusSession = DBusSession::instance();
+    auto action = std::unique_ptr<Action>{
+        new TextChangeAction{ TextChangeType::Added, sym, m_editor }
+    };
+    dbusSession->sendAction(std::move(action));
 }
 
 void TextChangeObserver::onSymRemoved(QChar const& sym)
 {
-	auto dbusSession = DBusSession::instance();
-	auto action = std::unique_ptr<Action>{
-		new TextChangeAction{TextChangeType::Removed, sym, m_editor}
-	};
-	dbusSession->sendAction(std::move(action));
+    auto dbusSession = DBusSession::instance();
+    auto action = std::unique_ptr<Action>{
+        new TextChangeAction{TextChangeType::Removed, sym, m_editor}
+    };
+    dbusSession->sendAction(std::move(action));
 }
 
 DBusActionsObserver::DBusActionsObserver(QTextEdit* textEditor, QObject* parent)
@@ -88,18 +88,7 @@ DBusActionsObserver::DBusActionsObserver(QTextEdit* textEditor, QObject* parent)
 
 void DBusActionsObserver::onDataReceived(ActionType type, QByteArray const& raw)
 {
-	auto data = raw;
-    /*
-    for (auto builder : GLOBAL_BUILDERS)
-	{
-		if (builder->supportAction(type))
-		{
-			auto memento = builder->buildMemento(std::move(data), type);
-			auto action = builder->buildAction(std::move(memento));
-			action->execute();
-		}
-	}
-    */
+    auto data = raw;
 
     auto builder = GlobalMementoBuilder::instance();
     if (builder->supportAction(type))

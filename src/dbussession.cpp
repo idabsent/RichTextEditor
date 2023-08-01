@@ -33,7 +33,7 @@ void DBusSession::initInstance(QString const& session)
 		throw std::runtime_error{"Can't connect to DBus daemon. Check daemon state"};
 	}
 
-	m_appId = tools::generate_random(0, 1000);
+    m_appId = tools::generate_random(0);
 	m_server = new DBusPublisher{ this };
     m_client = new DBusSubscriber{ {}, "/sessions/" + session, m_connection, this};
 

@@ -99,7 +99,8 @@ struct FormatAction : public Action
 
 	void execute() override;
 
-    virtual int pos() const = 0;
+    virtual int posBegin() const = 0;
+    virtual int posEnd() const = 0;
 	virtual QTextCharFormat createCharFormat() const = 0;
 
 private:
@@ -279,8 +280,8 @@ enum class TextChangeType : int
 struct TextChangeMemento : public StreamItemsMemento<int, int, QChar>
 {
 	TextChangeMemento() = default;
-	TextChangeMemento(QTextCursor const& cursor, TextChangeType type, QChar const& chr);
-	TextChangeMemento(int pos, TextChangeType type, QChar const& chr);
+    TextChangeMemento(QTextCursor const& cursor, TextChangeType type, QChar const& chr);
+    TextChangeMemento(int pos, TextChangeType type, QChar const& chr);
 
 	ActionType getActionType() const override;
 
@@ -291,14 +292,14 @@ using TextChangedMementoUP = std::unique_ptr<TextChangeMemento, std::default_del
 
 struct TextChangeAction : public Action
 {
-	TextChangeAction(QTextEdit* textEditor);
-	TextChangeAction(TextChangeType type, QChar const& chr, QTextEdit* textEditor);
+    TextChangeAction(QTextEdit* textEditor);
+    TextChangeAction(TextChangeType type, QChar const& chr, QTextEdit* textEditor);
 
 	void execute() override;
-	const Memento* getMemento() const;
+    const Memento* getMemento() const;
 
 protected:
-	void setMemento(MementoUP memento);
+    void setMemento(MementoUP memento);
 
 private:
 	friend struct GlobalMementoBuilder;

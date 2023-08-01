@@ -5,7 +5,7 @@
 #include <QColor>
 #include <QDataStream>
 
-struct BoldMemento : public StreamItemsMemento<int, bool>
+struct BoldMemento : public StreamItemsMemento<int, int, bool>
 {
     BoldMemento() = default;
 	BoldMemento(QTextCursor const& cursor, bool isBold);
@@ -21,7 +21,8 @@ struct FormatBold : public FormatAction
 {
 	FormatBold(bool isBold, QTextEdit* textEditor);
 
-    int pos() const override;
+    int posBegin() const override;
+    int posEnd() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 	void setMemento(MementoUP memento) override;
@@ -34,7 +35,7 @@ private:
 	BoldMementoUP m_memento;
 };
 
-struct ItalicMemento : public StreamItemsMemento<int, bool>
+struct ItalicMemento : public StreamItemsMemento<int, int, bool>
 {
     ItalicMemento() = default;
 	ItalicMemento(QTextCursor const& cursor, bool isItalic);
@@ -50,7 +51,8 @@ struct FormatItalic : public FormatAction
 {
 	FormatItalic(bool isItalic, QTextEdit* textEditor);
 
-    int pos() const override;
+    int posBegin() const override;
+    int posEnd() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -65,7 +67,7 @@ private:
 	ItalicMementoUP m_memento;
 };
 
-struct UnderlineMemento : public StreamItemsMemento<int, bool>
+struct UnderlineMemento : public StreamItemsMemento<int, int, bool>
 {
     UnderlineMemento() = default;
 	UnderlineMemento(QTextCursor const& cursor, bool isUnderline);
@@ -81,7 +83,8 @@ struct FormatUnderline : public FormatAction
 {
 	FormatUnderline(bool isUnderline, QTextEdit* textEditor);
 
-    int pos() const override;
+    int posBegin() const override;
+    int posEnd() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -96,7 +99,7 @@ private:
 	UnderlineMementoUP m_memento;
 };
 
-struct ColorMemento : public StreamItemsMemento<int, QColor>
+struct ColorMemento : public StreamItemsMemento<int, int, QColor>
 {
     ColorMemento() = default;
 	ColorMemento(QTextCursor const& cursor, QColor color);
@@ -112,7 +115,8 @@ struct FormatColor : public FormatAction
 {
 	FormatColor(QColor color, QTextEdit* textEditor);
 
-    int pos() const override;
+    int posBegin() const override;
+    int posEnd() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -127,7 +131,7 @@ private:
 	ColorMementoUP m_memento;
 };
 
-struct UnderlineColorMemento : public StreamItemsMemento<int, QColor>
+struct UnderlineColorMemento : public StreamItemsMemento<int, int, QColor>
 {
     UnderlineColorMemento() = default;
 	UnderlineColorMemento(QTextCursor const& cursor, QColor color);
@@ -143,7 +147,8 @@ struct FormatUnderlineColor : public FormatAction
 {
 	FormatUnderlineColor(QColor color, QTextEdit* textEditor);
 
-    int pos() const override;
+    int posBegin() const override;
+    int posEnd() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -158,7 +163,7 @@ private:
 	UnderlineColorMementoUP m_memento;
 };
 
-struct SizeMemento : public StreamItemsMemento<int, int>
+struct SizeMemento : public StreamItemsMemento<int, int, int>
 {
     SizeMemento() = default;
 	SizeMemento(QTextCursor const& cursor, int size);
@@ -174,7 +179,8 @@ struct FormatSize : public FormatAction
 {
 	FormatSize(int size, QTextEdit* textEditor);
 
-    int pos() const override;
+    int posBegin() const override;
+    int posEnd() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -189,7 +195,7 @@ private:
 	SizeMementoUP m_memento;
 };
 
-struct FamilyMemento : public StreamItemsMemento<int, QString>
+struct FamilyMemento : public StreamItemsMemento<int, int, QString>
 {
 	FamilyMemento() = default;
 	FamilyMemento(QTextCursor const& cursor, QString const& family);
@@ -205,7 +211,8 @@ struct FormatFamily : public FormatAction
 {
 	FormatFamily(QString const& family, QTextEdit* textEditor);
 
-    int pos() const override;
+    int posBegin() const override;
+    int posEnd() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 

@@ -192,7 +192,7 @@ void RichTextEditor::setupFormatActions()
     };
 
     auto underlineColorAction = m_builder->setActionIcon(QIcon{ ":/icons/formatunderlinecolor.png" })
-        ->createAction(tr("Change underline color"), underlineColorFn);
+        ->createAction(tr("Change underline color"));
 
     m_builder->endBuild();
 }

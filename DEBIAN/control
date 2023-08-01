@@ -1,0 +1,5 @@
+Package: RichTextEditor
+Version: 0.1
+Maintainer: Islam Gamzaev
+Architecture: x86_64
+Description: Simple rich text editor writed on Qt
