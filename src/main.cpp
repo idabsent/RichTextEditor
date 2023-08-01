@@ -1,10 +1,14 @@
 #include "richtexteditor.hpp"
 #include "dbussession.hpp"
+#include "tools.hpp"
+
 #include "config.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDebug>
+
+#include <random>
 
 auto main(int argc, char* argv[]) -> int
 {
@@ -13,6 +17,7 @@ auto main(int argc, char* argv[]) -> int
     app.setApplicationVersion(PROJECT_VERSION);
 
     QCommandLineParser cliParser;
+    cliParser.setApplicationDescription(PROJECT_DESCRIPTION);
 
     QCommandLineOption detached{
                 QApplication::tr("detached"),
@@ -31,7 +36,24 @@ auto main(int argc, char* argv[]) -> int
 
     cliParser.process(app);
 
-    DBusSession::createInstance("...");
+    if (cliParser.isSet(detached) && cliParser.isSet(session))
+    {
+        cliParser.showHelp(EXIT_FAILURE);
+    }
+
+    if (cliParser.isSet(detached))
+    {
+        auto randomSession = QString::number(tools::generate_random(0, 1000));
+        DBusSession::createInstance("session_" + randomSession);
+    }
+    else if (cliParser.isSet(session))
+    {
+        DBusSession::createInstance(cliParser.value(session));
+    }
+    else
+    {
+        DBusSession::createInstance("common");
+    }
 
     RichTextEditor win;
     win.buildUi();

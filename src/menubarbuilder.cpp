@@ -1,57 +1,93 @@
 #include "menubarbuilder.hpp"
+#include "tools.hpp"
 
 #include <QMenuBar>
+#include <QDebug>
 
-MenuBarBuilder::MenuBarBuilder(QMainWindow* win, QString const& barName, QString const& menuName)
-    : m_win{win}
+MenuBarBuilder::MenuBarBuilder(QMainWindow* win)
+    : QObject{win}
+    , m_win{win}
+    , m_toolBar{nullptr}
+    , m_menu{nullptr}
 {
-    m_toolBar = m_win->addToolBar(barName);
-    m_menu = m_win->menuBar()->addMenu(menuName);
-
     reset();
 }
 
-MenuBarBuilder& MenuBarBuilder::setActionPriority(QAction::Priority priority)
+MenuBarBuilder* MenuBarBuilder::startBuild(QString const& barName, QString const& menuName)
+{
+    m_toolBar = new QToolBar{barName};
+    m_menu = new QMenu{menuName};
+
+    return this;
+}
+
+void MenuBarBuilder::endBuild()
+{
+    m_win->addToolBar(m_toolBar);
+    m_win->menuBar()->addMenu(m_menu);
+
+    m_toolBar = nullptr;
+    m_menu = nullptr;
+}
+
+MenuBarBuilder* MenuBarBuilder::setActionPriority(QAction::Priority priority)
 {
     m_priority = priority;
-    return *this;
+    return this;
 }
 
-MenuBarBuilder& MenuBarBuilder::setActionShortcut(QKeySequence shortcut)
+MenuBarBuilder* MenuBarBuilder::setActionShortcut(QKeySequence shortcut)
 {
     m_shortcut = shortcut;
-    return *this;
+    return this;
 }
 
-MenuBarBuilder& MenuBarBuilder::setActionIcon(QIcon&& icon)
+MenuBarBuilder* MenuBarBuilder::setActionIcon(QIcon&& icon)
 {
     m_icon = std::move(icon);
-    return *this;
+    return this;
 }
 
-MenuBarBuilder& MenuBarBuilder::enableSepartorToMenu()
+MenuBarBuilder* MenuBarBuilder::enableSepartorToMenu()
 {
     m_enableSeparator = true;
-    return *this;
+    return this;
 }
 
-MenuBarBuilder& MenuBarBuilder::disableForMenu()
+MenuBarBuilder* MenuBarBuilder::disableForMenu()
 {
     m_disableForMenu = true;
-    return *this;
+    return this;
 }
 
-MenuBarBuilder& MenuBarBuilder::disableForToolBar()
+MenuBarBuilder* MenuBarBuilder::disableForToolBar()
 {
     m_disableForBar = true;
-    return *this;
+    return this;
 }
 
-QAction* MenuBarBuilder::createAction(QString const& name)
+MenuBarBuilder* MenuBarBuilder::setCheckable(bool checkable)
+{
+    m_checkable = true;
+    return this;
+}
+
+QAction* MenuBarBuilder::createAction(QString const& name, ExecuteAction fn)
 {
     auto action = new QAction{name};
     action->setShortcut(m_shortcut);
     action->setPriority(m_priority);
+    action->setCheckable(m_checkable);
+
+    QObject::connect(action, &QAction::triggered, m_win, [=]
+    {
+        qDebug() << FUNC_SIGN << ": action" << name << "triggered";
+        if (auto actionObject = fn(action))
+        {
+            actionObject->execute();
+            delete actionObject;
+        }
+    });
 
     if (!m_icon.isNull())
     {
@@ -86,4 +122,5 @@ void MenuBarBuilder::reset()
     m_priority = QAction::NormalPriority;
     m_disableForBar = false;
     m_disableForMenu = false;
+    m_checkable = false;
 }

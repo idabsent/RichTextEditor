@@ -1,16 +1,18 @@
 #include "texteditoractions.hpp"
+#include "formatactions.hpp"
+#include "tools.hpp"
 
 #include <exception>
-
 #include <QDataStream>
+#include <QTextList>
 
-std::unique_ptr<TextEditorFormatMementoBuilder> TextEditorFormatMementoBuilder::_instance;
+std::unique_ptr<GlobalMementoBuilder> GlobalMementoBuilder::_instance;
 
-TextEditorFormatMementoBuilder::TextEditorFormatMementoBuilder(QTextEdit* editor)
+GlobalMementoBuilder::GlobalMementoBuilder(QTextEdit* editor)
 	: m_editor{editor}
 {	}
 
-bool TextEditorFormatMementoBuilder::supportAction(ActionType action) const
+bool GlobalMementoBuilder::supportAction(ActionType action) const
 {
 	switch (action)
 	{
@@ -26,6 +28,7 @@ bool TextEditorFormatMementoBuilder::supportAction(ActionType action) const
 	case ActionType::FormatColor:
 	case ActionType::FormatUnderlineColor:
 	case ActionType::FormatChecked:
+    case ActionType::TextChange:
 		return true;
 	default:
 		return false;
@@ -33,41 +36,191 @@ bool TextEditorFormatMementoBuilder::supportAction(ActionType action) const
 }
 
 //TODO enable support other action mementos
-MementoUP TextEditorFormatMementoBuilder::buildMemento(QByteArray&& data, ActionType action)
+MementoUP GlobalMementoBuilder::buildMemento(QByteArray&& data, ActionType action)
 {
 	MementoUP memento;
 
 	switch (action)
 	{
-	case ActionType::FormatBold:
+    case ActionType::FormatBold:
+        memento.reset(new BoldMemento);
+        break;
 	case ActionType::FormatItalic:
+        memento.reset(new ItalicMemento);
+        break;
 	case ActionType::FormatUnderline:
+        memento.reset(new UnderlineMemento);
+        break;
 	case ActionType::FormatAlignLeft:
+        memento.reset(new AlignLeftMemento);
+        break;
 	case ActionType::FormatAlignRight:
+        memento.reset(new AlignRightMemento);
+        break;
 	case ActionType::FormatAlignCenter:
+        memento.reset(new AlignCenterMemento);
+        break;
 	case ActionType::FormatAlignJustify:
+        memento.reset(new AlignJustifyMemento);
+        break;
 	case ActionType::FormatIndent:
+        //memento.reset()
+        break;
 	case ActionType::FormatUnindent:
 	case ActionType::FormatColor:
+        memento.reset(new ColorMemento);
+        break;
 	case ActionType::FormatUnderlineColor:
-	case ActionType::FormatChecked:
-		break;
+        memento.reset(new UnderlineColorMemento);
+        break;
+    case ActionType::FormatChecked:
+        break;
+    case ActionType::FontSize:
+        memento.reset(new SizeMemento);
+        break;
+    case ActionType::FontFamily:
+        memento.reset(new FamilyMemento);
+        break;
+    case ActionType::TextChange:
+        memento.reset(new TextChangeMemento);
+        break;
+    default:
+        auto errorMsg = QString{"%1: Attemption build memento from unsupported ActionType{%2}"}
+                .arg(FUNC_SIGN)
+                .arg(static_cast<int>(action));
+
+        throw std::logic_error{errorMsg.toStdString()};
 	}
 
-	return MementoUP{ nullptr };
+    memento->initFromRaw(std::move(data));
+
+    return memento;
 }
 
-ActionUP TextEditorFormatMementoBuilder::buildAction(MementoUP memento)
+ActionUP GlobalMementoBuilder::buildAction(MementoUP memento)
 {
-	return ActionUP{ nullptr };
+    ActionUP action;
+
+    switch(memento->getActionType())
+    {
+    case ActionType::FormatBold:
+    {
+        auto o_action = new FormatBold{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatItalic:
+    {
+        auto o_action = new FormatItalic{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatUnderline:
+    {
+        auto o_action = new FormatUnderline{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatAlignLeft:
+    {
+        auto o_action = new FormatAlignLeft{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatAlignRight:
+    {
+        auto o_action = new FormatAlignRight{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatAlignCenter:
+    {
+        auto o_action = new FormatAlignCenter{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatAlignJustify:
+    {
+        auto o_action = new FormatAlignJustify{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatIndent:
+    case ActionType::FormatUnindent:
+    {
+        auto o_action = new FormatIndent{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatColor:
+    {
+        auto o_action = new FormatColor{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatUnderlineColor:
+    {
+        auto o_action = new FormatColor{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FormatChecked:
+    {
+        auto o_action = new FormatChecked{m_editor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FontSize:
+    {
+        auto o_action = new FormatSize{ m_editor };
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FontFamily:
+    {
+        auto o_action = new FormatFamily{ m_editor };
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::TextChange:
+    {
+        auto o_action = new TextChangeAction{ m_editor };
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    default:
+        auto errorMsg = QString{"%1: Attemption build action from unsupported ActionType{%2}"}
+                .arg(FUNC_SIGN)
+                .arg(static_cast<int>(memento->getActionType()));
+
+        throw std::logic_error{errorMsg.toStdString()};
+    }
+
+    return action;
 }
 
-void TextEditorFormatMementoBuilder::createInstance(QTextEdit* editor)
+void GlobalMementoBuilder::createInstance(QTextEdit* editor)
 {
-	_instance.reset(new TextEditorFormatMementoBuilder{ editor });
+    auto builder = new GlobalMementoBuilder{ editor };
+    GLOBAL_BUILDERS << builder;
+    _instance.reset(builder);
 }
 
-TextEditorFormatMementoBuilder* TextEditorFormatMementoBuilder::instance()
+GlobalMementoBuilder* GlobalMementoBuilder::instance()
 {
 	if (!_instance)
 	{
@@ -77,16 +230,16 @@ TextEditorFormatMementoBuilder* TextEditorFormatMementoBuilder::instance()
 	return _instance.get();
 }
 
-TextEditorFormatAction::TextEditorFormatAction(QTextEdit* textEditor)
+FormatAction::FormatAction(QTextEdit* textEditor)
 	: m_editor{textEditor}
 {	}
 
-void TextEditorFormatAction::execute()
+void FormatAction::execute()
 {
 	mergeFormat(createCharFormat());
 }
 
-void TextEditorFormatAction::mergeFormat(QTextCharFormat const& fmt)
+void FormatAction::mergeFormat(QTextCharFormat const& fmt)
 {
 	auto cursor = m_editor->textCursor();
 
@@ -99,120 +252,121 @@ void TextEditorFormatAction::mergeFormat(QTextCharFormat const& fmt)
 	m_editor->mergeCurrentCharFormat(fmt);
 }
 
-TextEditorFormatIndentMemento::TextEditorFormatIndentMemento(QTextCursor const& cursor, int indent)
-	: Memento{}
-	, m_pos{cursor.position()}
-	, m_indent{indent}
-	, m_action{m_pos > 0 ? ActionType::FormatIndent : ActionType::FormatUnindent }
+IndentMemento::IndentMemento(QTextCursor const& cursor, int indent)
+    : IndentMemento{cursor.position(), indent}
 {	}
 
-TextEditorFormatIndentMemento::TextEditorFormatIndentMemento(int pos, int indent)
-	: Memento{}
-	, m_pos{ pos }
-	, m_indent{ indent }
-	, m_action{ m_pos > 0 ? ActionType::FormatIndent : ActionType::FormatUnindent }
+IndentMemento::IndentMemento(int pos, int indent)
+    : StreamItemsMemento{pos, indent}
 {	}
 
-ActionType TextEditorFormatIndentMemento::getActionType() const
+ActionType IndentMemento::getActionType() const
 {
-	return m_action;
+    return std::get<1>(m_items) >= 0 ? ActionType::FormatIndent : ActionType::FormatUnindent;
 }
 
-QByteArray TextEditorFormatIndentMemento::toRaw() const
-{
-	QByteArray raw;
-	QDataStream rawStream{ &raw, QIODevice::WriteOnly };
+FormatIndent::FormatIndent(QTextEdit* textEditor)
+    : m_editor{textEditor}
+    , m_memento{nullptr}
+{   }
 
-	rawStream << m_pos << m_indent;
-
-	return raw;
-}
-
-void TextEditorFormatIndentMemento::initFromRaw(QByteArray&& raw)
-{
-	QDataStream rawStream{ &raw, QIODevice::ReadOnly };
-
-	rawStream >> m_pos >> m_indent;
-}
-
-TextEditorFormatIndentAction::TextEditorFormatIndentAction(int indent, QTextEdit* textEditor)
+FormatIndent::FormatIndent(int indent, QTextEdit* textEditor)
 	: m_editor{textEditor}
-	, m_memento{std::make_unique<TextEditorFormatIndentMemento>(textEditor->textCursor(), indent)}
+    , m_memento{std::make_unique<IndentMemento>(textEditor->textCursor(), indent)}
 {	}
 
 //TODO
-void TextEditorFormatIndentAction::execute()
+void FormatIndent::execute()
 {
-	
+    auto indent = std::get<1>(m_memento->m_items);
+
+    QTextCursor cursor = m_editor->textCursor();
+    cursor.beginEditBlock();
+    if (cursor.currentList()) {
+        QTextListFormat listFmt = cursor.currentList()->format();
+        // See whether the line above is the list we want to move this item into,
+        // or whether we need a new list.
+        QTextCursor above(cursor);
+        above.movePosition(QTextCursor::Up);
+        if (above.currentList() && listFmt.indent() + indent == above.currentList()->format().indent()) {
+            above.currentList()->add(cursor.block());
+        }
+        else {
+            listFmt.setIndent(listFmt.indent() + indent);
+            cursor.createList(listFmt);
+        }
+    }
+    else {
+        QTextBlockFormat blockFmt = cursor.blockFormat();
+        blockFmt.setIndent(blockFmt.indent() + indent);
+        cursor.setBlockFormat(blockFmt);
+    }
+    cursor.endEditBlock();
 }
 
-const Memento* TextEditorFormatIndentAction::getMemento() const
+const Memento* FormatIndent::getMemento() const
 {
 	return m_memento.get();
 }
 
-void TextEditorFormatIndentAction::setMemento(MementoUP memento)
+void FormatIndent::setMemento(MementoUP memento)
 {
-	auto memento_o = dynamic_cast<TextEditorFormatIndentMemento*>(memento.get());
-	if (!memento_o)
-	{
-		auto mementoType = typeid(memento_o).name();
-		throw std::runtime_error{"Received memento of other type: " + std::string{mementoType}};
-	}
+    auto casted = tools::unique_dyn_cast<IndentMemento>(std::move(memento));
 
-	m_memento = std::move(memento);
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(memento);
 }
 
-TextEditorFormatCheckedMemento::TextEditorFormatCheckedMemento(QTextCursor const& cursor, bool isChecked)
-	: TextEditorFormatCheckedMemento{cursor.position(), isChecked}
+CheckedMemento::CheckedMemento(QTextCursor const& cursor, bool isChecked)
+    : CheckedMemento{cursor.position(), isChecked}
 {	}
 
-TextEditorFormatCheckedMemento::TextEditorFormatCheckedMemento(int pos, bool isChecked)
-	: m_pos{pos}
-	, m_checked{isChecked}
+CheckedMemento::CheckedMemento(int pos, bool isChecked)
+    : StreamItemsMemento{pos, isChecked}
 {	}
 
-ActionType TextEditorFormatCheckedMemento::getActionType() const
+ActionType CheckedMemento::getActionType() const
 {
 	return ActionType::FormatChecked;
 }
 
-QByteArray TextEditorFormatCheckedMemento::toRaw() const
-{
-	QByteArray raw;
-	QDataStream rawStream{ &raw, QIODevice::WriteOnly };
+FormatChecked::FormatChecked(QTextEdit* textEditor)
+    : m_editor{textEditor}
+    , m_memento{nullptr}
+{   }
 
-	rawStream << m_pos << m_checked;
-
-	return raw;
-}
-
-void TextEditorFormatCheckedMemento::initFromRaw(QByteArray&& raw)
-{
-	QDataStream rawStream{ &raw, QIODevice::WriteOnly };
-
-	rawStream >> m_pos >> m_checked;
-}
-
-TextEditorFormatCheckedAction::TextEditorFormatCheckedAction(bool checked, QTextEdit* textEditor)
+FormatChecked::FormatChecked(bool checked, QTextEdit* textEditor)
 	: m_editor{ textEditor }
-	, m_memento{ std::make_unique< TextEditorFormatCheckedMemento>(textEditor->textCursor(), checked) }
+    , m_memento{ std::make_unique< CheckedMemento>(textEditor->textCursor(), checked) }
 {	}
 
 //TODO implement action
-void TextEditorFormatCheckedAction::execute()
+void FormatChecked::execute()
 {
 	
 }
 
-const Memento* TextEditorFormatCheckedAction::getMemento() const
+const Memento* FormatChecked::getMemento() const
 {
 	return m_memento.get();
 }
 
-void TextEditorFormatCheckedAction::setMemento(MementoUP memento)
+void FormatChecked::setMemento(MementoUP memento)
 {
-	m_memento = std::move(memento);
+    auto casted = tools::unique_dyn_cast<CheckedMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
 }
 
 
@@ -221,10 +375,15 @@ ActionType AlignLeftMemento::getActionType() const
 	return ActionType::FormatAlignLeft;
 }
 
+FormatAlignLeft::FormatAlignLeft(QTextEdit* textEditor)
+    : m_editor{textEditor}
+    , m_memento{std::make_unique<AlignLeftMemento>()}
+{   }
+
 //TODO
 void FormatAlignLeft::execute()
 {
-
+    m_editor->setAlignment(Qt::AlignLeft);
 }
 
 const Memento* FormatAlignLeft::getMemento() const
@@ -250,10 +409,15 @@ ActionType AlignCenterMemento::getActionType() const
 	return ActionType::FormatAlignCenter;
 }
 
+FormatAlignCenter::FormatAlignCenter(QTextEdit* textEditor)
+    : m_editor{textEditor}
+    , m_memento{std::make_unique<AlignCenterMemento>()}
+{   }
+
 //TODO
 void FormatAlignCenter::execute() 
 {
-
+    m_editor->setAlignment(Qt::AlignCenter);
 }
 
 const Memento* FormatAlignCenter::getMemento() const
@@ -279,10 +443,15 @@ ActionType AlignRightMemento::getActionType() const
 	return ActionType::FormatAlignRight;
 }
 
+FormatAlignRight::FormatAlignRight(QTextEdit* textEditor)
+    : m_editor{textEditor}
+    , m_memento{std::make_unique<AlignRightMemento>()}
+{   }
+
 //TODO
 void FormatAlignRight::execute()
 {
-
+    m_editor->setAlignment(Qt::AlignRight);
 }
 
 const Memento* FormatAlignRight::getMemento() const
@@ -308,10 +477,15 @@ ActionType AlignJustifyMemento::getActionType() const
 	return ActionType::FormatAlignJustify;
 }
 
+FormatAlignJustify::FormatAlignJustify(QTextEdit* textEditor)
+    : m_editor{textEditor}
+    , m_memento{std::make_unique<AlignJustifyMemento>()}
+{   }
+
 //TODO
 void FormatAlignJustify::execute()
 {
-
+    m_editor->setAlignment(Qt::AlignJustify);
 }
 
 const Memento* FormatAlignJustify::getMemento() const
@@ -330,4 +504,66 @@ void FormatAlignJustify::setMemento(MementoUP memento)
 	}
 
 	throwInvalidMemento(memento);
+}
+
+TextChangeMemento::TextChangeMemento(QTextCursor const& cursor, TextChangeType type, QChar const& chr)
+    : TextChangeMemento{cursor.position(), type, chr}
+{   }
+
+TextChangeMemento::TextChangeMemento(int pos, TextChangeType type, QChar const& chr)
+    : StreamItemsMemento{pos, static_cast<int>(type), chr}
+{   }
+
+ActionType TextChangeMemento::getActionType() const
+{
+    return ActionType::TextChange;
+}
+
+TextChangeAction::TextChangeAction(QTextEdit* textEditor)
+    : m_editor{textEditor}
+    , m_memento{nullptr}
+{   }
+
+TextChangeAction::TextChangeAction(TextChangeType type, QChar const& chr, QTextEdit* textEditor)
+    : m_editor{textEditor}
+    , m_memento{std::make_unique<TextChangeMemento>(textEditor->textCursor(), type, chr)}
+{   }
+
+void TextChangeAction::execute()
+{
+    auto m_pos = std::get<0>(m_memento->m_items);
+    auto action = static_cast<TextChangeType>(std::get<1>(m_memento->m_items));
+    auto m_chr = std::get<2>(m_memento->m_items);
+
+    auto cursor = m_editor->textCursor();
+    cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+    cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, m_pos);
+
+    switch (action)
+    {
+    case TextChangeType::Added:
+        cursor.insertText(QString{ m_chr });
+        break;
+    case TextChangeType::Removed:
+        cursor.deleteChar();
+        break;
+    }
+}
+
+const Memento* TextChangeAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void TextChangeAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<TextChangeMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
 }

@@ -3,6 +3,9 @@
 #include <QMainWindow>
 #include <QTextEdit>
 
+#include "menubarbuilder.hpp"
+#include "editorobservers.hpp"
+
 struct RichTextEditor : public QMainWindow
 {
     RichTextEditor(QMainWindow* parent = nullptr);
@@ -17,7 +20,10 @@ private:
     void setupEditActions();
     void setupFontSelectorToolBar();
 
-    void buildEditor();
+    void buildEditorAndObjects();
 
     QTextEdit* m_textEditor;
+    MenuBarBuilder* m_builder;
+    TextChangeObserver* m_textObserver;
+    DBusActionsObserver* m_actionsObserver;
 };

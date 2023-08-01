@@ -1,23 +1,41 @@
 #pragma once
 
+#include "actions.hpp"
+
 #include <QToolBar>
 #include <QMenu>
 #include <QAction>
 #include <QIcon>
 #include <QMainWindow>
 
-struct MenuBarBuilder
+#include <functional>
+
+using ExecuteAction = std::function<Action*(QAction*)>;
+
+namespace
 {
-    MenuBarBuilder(QMainWindow* win, QString const& barName, QString const& menuName);
+Action* defaultAction(QAction*)
+{
+    return nullptr;
+}
+}
 
-    MenuBarBuilder& setActionPriority(QAction::Priority priority);
-    MenuBarBuilder& setActionShortcut(QKeySequence shortcut);
-    MenuBarBuilder& setActionIcon(QIcon&& icon);
-    MenuBarBuilder& enableSepartorToMenu();
-    MenuBarBuilder& disableForMenu();
-    MenuBarBuilder& disableForToolBar(); 
+struct MenuBarBuilder : public QObject
+{
+    MenuBarBuilder(QMainWindow* win);
 
-    QAction* createAction(QString const& name);
+    MenuBarBuilder* startBuild(QString const& barName, QString const& menuName);
+    void endBuild();
+
+    MenuBarBuilder* setActionPriority(QAction::Priority priority);
+    MenuBarBuilder* setActionShortcut(QKeySequence shortcut);
+    MenuBarBuilder* setActionIcon(QIcon&& icon);
+    MenuBarBuilder* setCheckable(bool checkable);
+    MenuBarBuilder* enableSepartorToMenu();
+    MenuBarBuilder* disableForMenu();
+    MenuBarBuilder* disableForToolBar();
+
+    QAction* createAction(QString const& name, ExecuteAction fn = ::defaultAction);
 
 private:
     void reset();
@@ -31,4 +49,5 @@ private:
     bool m_enableSeparator;
     bool m_disableForMenu;
     bool m_disableForBar;
+    bool m_checkable;
 };

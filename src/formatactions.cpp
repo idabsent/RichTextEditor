@@ -2,6 +2,8 @@
 
 #include "tools.hpp"
 
+#include <QDebug>
+
 BoldMemento::BoldMemento(QTextCursor const& cursor, bool isBold)
 	: StreamItemsMemento{ cursor.position(), isBold }
 {	}
@@ -11,8 +13,13 @@ ActionType BoldMemento::getActionType() const
 	return ActionType::FormatBold;
 }
 
+FormatBold::FormatBold(QTextEdit* textEditor)
+    : FormatAction{textEditor}
+    , m_memento{nullptr}
+{   }
+
 FormatBold::FormatBold(bool isBold, QTextEdit* textEditor)
-	: TextEditorFormatAction{textEditor}
+    : FormatAction{textEditor}
 	, m_memento{std::make_unique<BoldMemento>(textEditor->textCursor(), isBold)}
 {	}
 
@@ -49,8 +56,13 @@ ActionType ItalicMemento::getActionType() const
 	return ActionType::FormatItalic;
 }
 
+FormatItalic::FormatItalic(QTextEdit* textEditor)
+    : FormatAction{textEditor}
+    , m_memento{nullptr}
+{   }
+
 FormatItalic::FormatItalic(bool isItalic, QTextEdit* textEditor)
-	: TextEditorFormatAction{ textEditor }
+    : FormatAction{ textEditor }
 	, m_memento{std::make_unique<ItalicMemento>(textEditor->textCursor(), isItalic)}
 {	}
 
@@ -88,8 +100,13 @@ ActionType UnderlineMemento::getActionType() const
 	return ActionType::FormatUnderline;
 }
 
+FormatUnderline::FormatUnderline(QTextEdit* textEditor)
+    : FormatAction{textEditor}
+    , m_memento{nullptr}
+{   }
+
 FormatUnderline::FormatUnderline(bool isUnderline, QTextEdit* textEditor)
-	: TextEditorFormatAction{textEditor}
+    : FormatAction{textEditor}
 	, m_memento{std::make_unique<UnderlineMemento>(textEditor->textCursor(), isUnderline)}
 {	}
 
@@ -118,8 +135,13 @@ void FormatUnderline::setMemento(MementoUP memento)
 	throwInvalidMemento(memento);
 }
 
+FormatColor::FormatColor(QTextEdit* textEditor)
+    : FormatAction{textEditor}
+    , m_memento{nullptr}
+{   }
+
 FormatColor::FormatColor(QColor color, QTextEdit* textEditor)
-	: TextEditorFormatAction{ textEditor }
+    : FormatAction{ textEditor }
 	, m_memento{ std::make_unique<ColorMemento>(textEditor->textCursor(), color) }
 {	}
 
@@ -166,11 +188,15 @@ ActionType UnderlineColorMemento::getActionType() const
 	return ActionType::FormatUnderlineColor;
 }
 
+FormatUnderlineColor::FormatUnderlineColor(QTextEdit* textEditor)
+    : FormatAction{textEditor}
+    , m_memento{nullptr}
+{   }
+
 FormatUnderlineColor::FormatUnderlineColor(QColor color, QTextEdit* textEditor)
-	: TextEditorFormatAction{textEditor}
+    : FormatAction{textEditor}
 	, m_memento{std::make_unique<UnderlineColorMemento>(textEditor->textCursor(), color)}
 {	}
-
 
 QTextCharFormat FormatUnderlineColor::createCharFormat() const
 {
@@ -206,8 +232,13 @@ ActionType SizeMemento::getActionType() const
 	return ActionType::FontSize;
 }
 
+FormatSize::FormatSize(QTextEdit* textEditor)
+    : FormatAction{textEditor}
+    , m_memento{nullptr}
+{   }
+
 FormatSize::FormatSize(int size, QTextEdit* textEditor)
-	: TextEditorFormatAction{textEditor}
+    : FormatAction{textEditor}
 	, m_memento{std::make_unique<SizeMemento>(textEditor->textCursor(), size)}
 {	}
 
@@ -234,4 +265,48 @@ void FormatSize::setMemento(MementoUP memento)
 	}
 
 	throwInvalidMemento(memento);
+}
+
+FamilyMemento::FamilyMemento(QTextCursor const& cursor, QString const& family)
+	: StreamItemsMemento{cursor.position(), family}
+{	}
+
+ActionType FamilyMemento::getActionType() const
+{
+	return ActionType::FontFamily;
+}
+
+FormatFamily::FormatFamily(QTextEdit* textEditor)
+	: FormatAction{textEditor}
+	, m_memento{nullptr}
+{	}
+
+FormatFamily::FormatFamily(QString const& family, QTextEdit* textEditor)
+	: FormatAction{textEditor}
+	, m_memento{ std::make_unique<FamilyMemento>(textEditor->textCursor(), family) }
+{	}
+
+QTextCharFormat FormatFamily::createCharFormat() const
+{
+	QTextCharFormat fmt;
+	fmt.setFontFamily(std::get<1>(m_memento->m_items));
+	return fmt;
+}
+
+const Memento* FormatFamily::getMemento() const
+{
+	return m_memento.get();
+}
+
+void FormatFamily::setMemento(MementoUP memento)
+{
+	auto casted = tools::unique_dyn_cast<FamilyMemento>(std::move(memento));
+
+	if (casted)
+	{
+		m_memento = std::move(casted);
+		return;
+	}
+
+	throwInvalidMemento(casted);
 }

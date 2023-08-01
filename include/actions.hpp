@@ -19,12 +19,15 @@ enum class ActionType : uint16_t
     FormatChecked,
 
     FontSize,
+    FontFamily,
 
     EditCopy,
     EditPaste,
     EditCut,
     EditRedo,
     EditUndo,
+    
+    TextChange,
 };
 
 struct Memento;

@@ -10,34 +10,15 @@
 #include <type_traits>
 #include <tuple>
 
-template<typename Item>
-struct OneItemMemento : public Memento
-{
-	OneItemMemento(Item item)
-		: m_item{ std::move(item) }
-	{	}
-
-	QByteArray toRaw() const override
-	{
-		QByteArray raw;
-		QDataStream rawStream{ &raw, QIODevice::WriteOnly };
-		rawStream << m_item;
-		return raw;
-	}
-
-	void initFromRaw(QByteArray&& raw) override
-	{
-		QDataStream rawStream{ &raw, QIODevice::ReadOnly };
-		rawStream >> m_item;
-	}
-
-protected:
-	Item m_item;
-};
+static QList<MementoBuilder*> GLOBAL_BUILDERS;
 
 template <typename... Items>
 struct StreamItemsMemento : public Memento
 {
+    StreamItemsMemento()
+        : m_items{ Items{}... }
+    {   }
+
 	StreamItemsMemento(Items... items)
 		: m_items{ std::move(items)... }
 	{	}
@@ -96,58 +77,55 @@ struct EmptyMemento : public Memento
 	{	}
 };
 
-struct TextEditorFormatMementoBuilder : public MementoBuilder
+struct GlobalMementoBuilder : public MementoBuilder
 {
 	bool supportAction(ActionType action) const override;
 	ActionUP buildAction(MementoUP memento) override;
 	MementoUP buildMemento(QByteArray&& data, ActionType action) override;
 
 	static void createInstance(QTextEdit* editor);
-	static TextEditorFormatMementoBuilder* instance();
+    static GlobalMementoBuilder* instance();
 
 private:
-	static std::unique_ptr<TextEditorFormatMementoBuilder> _instance;
-	TextEditorFormatMementoBuilder(QTextEdit* editor);
+    static std::unique_ptr<GlobalMementoBuilder> _instance;
+    GlobalMementoBuilder(QTextEdit* editor);
 
 	QTextEdit* m_editor;
 };
 
-struct TextEditorFormatAction : public Action
+struct FormatAction : public Action
 {
-	TextEditorFormatAction(QTextEdit* textEditor);
+    FormatAction(QTextEdit* textEditor);
 
 	void execute() override;
 
 	virtual QTextCharFormat createCharFormat() const = 0;
 
 private:
-	friend class TextEditorFormatMementoBuilder;
+    friend struct GlobalMementoBuilder;
 
 	void mergeFormat(QTextCharFormat const& fmt);
 
 	QTextEdit* m_editor;
 };
 
-struct TextEditorFormatIndentMemento : public Memento
+struct IndentMemento : public StreamItemsMemento<int, int>
 {
-	TextEditorFormatIndentMemento(QTextCursor const& cursor, int indent);
-	TextEditorFormatIndentMemento(int pos, int indent);
+    IndentMemento() = default;
+    IndentMemento(QTextCursor const& cursor, int indent);
+    IndentMemento(int pos, int indent);
 
-	ActionType getActionType() const override;
-	QByteArray toRaw() const override;
-	void initFromRaw(QByteArray&& raw) override;
+    ActionType getActionType() const override;
 
 private:
-	friend class TextEditorFormatIndentAction;
-
-	int m_pos;
-	int m_indent;
-	ActionType m_action;
+    friend struct FormatIndent;
 };
 
-struct TextEditorFormatIndentAction : public Action
+using IndentMementoUP = std::unique_ptr<IndentMemento, std::default_delete<Memento>>;
+
+struct FormatIndent : public Action
 {
-	TextEditorFormatIndentAction(int indent, QTextEdit* textEditor);
+    FormatIndent(int indent, QTextEdit* textEditor);
 
 	void execute() override;
 	const Memento* getMemento() const override;
@@ -156,29 +134,28 @@ protected:
 	void setMemento(MementoUP memento) override;
 
 private:
+    friend struct GlobalMementoBuilder;
+
+    FormatIndent(QTextEdit* textEditor);
+
 	QTextEdit* m_editor;
-	MementoUP m_memento;
+    IndentMementoUP m_memento;
 };
 
-struct TextEditorFormatCheckedMemento : public Memento
+struct CheckedMemento : public StreamItemsMemento<int, bool>
 {
-	TextEditorFormatCheckedMemento(QTextCursor const& cursor, bool isChecked);
-	TextEditorFormatCheckedMemento(int pos, bool isChecked);
+    CheckedMemento() = default;
+    CheckedMemento(QTextCursor const& cursor, bool isChecked);
+    CheckedMemento(int pos, bool isChecked);
 
-	ActionType getActionType() const override;
-	QByteArray toRaw() const override;
-	void initFromRaw(QByteArray&& raw) override;
-
-private:
-	friend class TextEditorFormatCheckedAction;
-
-	int m_pos;
-	bool m_checked;
+    ActionType getActionType() const override;
 };
 
-struct TextEditorFormatCheckedAction : public Action
+using CheckedMementoUP = std::unique_ptr<CheckedMemento, std::default_delete<Memento>>;
+
+struct FormatChecked : public Action
 {
-	TextEditorFormatCheckedAction(bool checked, QTextEdit* textEditor);
+    FormatChecked(bool checked, QTextEdit* textEditor);
 
 	void execute() override;
 	const Memento* getMemento() const override;
@@ -187,8 +164,12 @@ protected:
 	void setMemento(MementoUP memento) override;
 
 private:
+    friend struct GlobalMementoBuilder;
+
+    FormatChecked(QTextEdit* textEditor);
+
 	QTextEdit* m_editor;
-	MementoUP m_memento;
+    CheckedMementoUP m_memento;
 };
 
 
@@ -201,6 +182,8 @@ using AlignLeftMementoUP = std::unique_ptr<AlignLeftMemento, std::default_delete
 
 struct FormatAlignLeft : public Action
 {
+    FormatAlignLeft(QTextEdit* textEditor);
+
 	void execute() override;
 	const Memento* getMemento() const override;
 
@@ -208,6 +191,9 @@ protected:
 	void setMemento(MementoUP memento) override;
 
 private:
+    friend struct GlobalMementoBuilder;
+
+    QTextEdit* m_editor;
 	AlignLeftMementoUP m_memento;
 };
 
@@ -220,6 +206,8 @@ using AlignCenterMementoUP = std::unique_ptr<AlignCenterMemento, std::default_de
 
 struct FormatAlignCenter : public Action
 {
+    FormatAlignCenter(QTextEdit* textEditor);
+
 	void execute() override;
 	const Memento* getMemento() const override;
 
@@ -227,6 +215,9 @@ protected:
 	void setMemento(MementoUP memento) override;
 
 private:
+    friend struct GlobalMementoBuilder;
+
+    QTextEdit* m_editor;
 	AlignCenterMementoUP m_memento;
 };
 
@@ -239,6 +230,8 @@ using AlignRightMementoUP = std::unique_ptr<AlignRightMemento, std::default_dele
 
 struct FormatAlignRight : public Action
 {
+    FormatAlignRight(QTextEdit* textEditor);
+
 	void execute() override;
 	const Memento* getMemento() const override;
 
@@ -246,6 +239,9 @@ protected:
 	void setMemento(MementoUP memento) override;
 
 private:
+    friend struct GlobalMementoBuilder;
+
+    QTextEdit* m_editor;
 	AlignRightMementoUP m_memento;
 };
 
@@ -258,6 +254,8 @@ using AlignJustifyMementoUP = std::unique_ptr<AlignJustifyMemento, std::default_
 
 struct FormatAlignJustify : public Action
 {
+    FormatAlignJustify(QTextEdit* textEditor);
+
 	void execute() override;
 	const Memento* getMemento() const override;
 
@@ -265,5 +263,45 @@ protected:
 	void setMemento(MementoUP memento) override;
 
 private:
+    friend struct GlobalMementoBuilder;
+
+    QTextEdit* m_editor;
 	AlignJustifyMementoUP m_memento;
+};
+
+enum class TextChangeType : int
+{
+	Removed,
+	Added,
+};
+
+struct TextChangeMemento : public StreamItemsMemento<int, int, QChar>
+{
+	TextChangeMemento() = default;
+	TextChangeMemento(QTextCursor const& cursor, TextChangeType type, QChar const& chr);
+	TextChangeMemento(int pos, TextChangeType type, QChar const& chr);
+
+	ActionType getActionType() const override;
+
+	friend struct TextChangeAction;
+};
+
+using TextChangedMementoUP = std::unique_ptr<TextChangeMemento, std::default_delete<Memento>>;
+
+struct TextChangeAction : public Action
+{
+	TextChangeAction(QTextEdit* textEditor);
+	TextChangeAction(TextChangeType type, QChar const& chr, QTextEdit* textEditor);
+
+	void execute() override;
+	const Memento* getMemento() const;
+
+protected:
+	void setMemento(MementoUP memento);
+
+private:
+	friend struct GlobalMementoBuilder;
+
+	QTextEdit* m_editor;
+	TextChangedMementoUP m_memento;
 };

@@ -5,6 +5,7 @@
 #include <tuple>
 #include <exception>
 #include <string>
+#include <random>
 
 #define toolsTypeName(Val) std::string{typeid(Val).name()}
 #define throwInvalidMemento(memento) \
@@ -30,6 +31,15 @@ std::unique_ptr<To, Deleter> unique_dyn_cast(std::unique_ptr<From, Deleter>&& pt
 	}
 
 	return std::unique_ptr<To>(nullptr);
+}
+
+
+inline int generate_random(int beg, int end = std::numeric_limits<int>::max())
+{
+	std::random_device dev;
+	std::mt19937 eng{dev()};
+	std::uniform_int_distribution dstr{beg, end};
+	return dstr(dev);
 }
 
 //TODO fix it

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(RichTextEditor
     VERSION 0.1
+    DESCRIPTION "Simple rich text editor"
     LANGUAGES CXX
 )
 
@@ -24,7 +25,11 @@ set(HEADER_FILES
     include/richtexteditor.hpp
     include/menubarbuilder.hpp
     include/actions.hpp
+    include/formatactions.hpp
+    include/editorobservers.hpp
+    include/texteditoractions.hpp
     include/dbussession.hpp
+    include/tools.hpp
     include/config.in
 )
 
@@ -35,6 +40,7 @@ set(SOURCE_FILES
     src/texteditoractions.cpp
     src/formatactions.cpp
     src/dbussession.cpp
+    src/editorobservers.cpp
 )
 
 qt5_add_translation(QM_FILES ${TS_FILES})
