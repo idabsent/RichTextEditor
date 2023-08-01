@@ -241,7 +241,10 @@ void FormatAction::execute()
 
 void FormatAction::mergeFormat(QTextCharFormat const& fmt)
 {
-	auto cursor = m_editor->textCursor();
+    auto m_pos = pos();
+    auto cursor = m_editor->textCursor();
+    cursor.movePosition(QTextCursor::Start);
+    cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, m_pos);
 
 	if (!cursor.hasSelection())
 	{

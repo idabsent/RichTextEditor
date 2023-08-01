@@ -99,6 +99,7 @@ struct FormatAction : public Action
 
 	void execute() override;
 
+    virtual int pos() const = 0;
 	virtual QTextCharFormat createCharFormat() const = 0;
 
 private:

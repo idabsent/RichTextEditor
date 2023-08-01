@@ -23,6 +23,11 @@ FormatBold::FormatBold(bool isBold, QTextEdit* textEditor)
 	, m_memento{std::make_unique<BoldMemento>(textEditor->textCursor(), isBold)}
 {	}
 
+int FormatBold::pos() const
+{
+    return std::get<0>(m_memento->m_items);
+}
+
 QTextCharFormat FormatBold::createCharFormat() const
 {
 	QTextCharFormat fmt;
@@ -65,6 +70,11 @@ FormatItalic::FormatItalic(bool isItalic, QTextEdit* textEditor)
     : FormatAction{ textEditor }
 	, m_memento{std::make_unique<ItalicMemento>(textEditor->textCursor(), isItalic)}
 {	}
+
+int FormatItalic::pos() const
+{
+    return std::get<0>(m_memento->m_items);
+}
 
 QTextCharFormat FormatItalic::createCharFormat() const
 {
@@ -110,6 +120,11 @@ FormatUnderline::FormatUnderline(bool isUnderline, QTextEdit* textEditor)
 	, m_memento{std::make_unique<UnderlineMemento>(textEditor->textCursor(), isUnderline)}
 {	}
 
+int FormatUnderline::pos() const
+{
+    return std::get<0>(m_memento->m_items);
+}
+
 QTextCharFormat FormatUnderline::createCharFormat() const
 {
 	QTextCharFormat fmt;
@@ -152,6 +167,11 @@ ColorMemento::ColorMemento(QTextCursor const& cursor, QColor color)
 ActionType ColorMemento::getActionType() const
 {
 	return ActionType::FormatColor;
+}
+
+int FormatColor::pos() const
+{
+    return std::get<0>(m_memento->m_items);
 }
 
 QTextCharFormat FormatColor::createCharFormat() const
@@ -198,6 +218,11 @@ FormatUnderlineColor::FormatUnderlineColor(QColor color, QTextEdit* textEditor)
 	, m_memento{std::make_unique<UnderlineColorMemento>(textEditor->textCursor(), color)}
 {	}
 
+int FormatUnderlineColor::pos() const
+{
+    return std::get<0>(m_memento->m_items);
+}
+
 QTextCharFormat FormatUnderlineColor::createCharFormat() const
 {
 	QTextCharFormat fmt;
@@ -242,6 +267,11 @@ FormatSize::FormatSize(int size, QTextEdit* textEditor)
 	, m_memento{std::make_unique<SizeMemento>(textEditor->textCursor(), size)}
 {	}
 
+int FormatSize::pos() const
+{
+    return std::get<0>(m_memento->m_items);
+}
+
 QTextCharFormat FormatSize::createCharFormat() const
 {
 	QTextCharFormat fmt;
@@ -285,6 +315,11 @@ FormatFamily::FormatFamily(QString const& family, QTextEdit* textEditor)
 	: FormatAction{textEditor}
 	, m_memento{ std::make_unique<FamilyMemento>(textEditor->textCursor(), family) }
 {	}
+
+int FormatFamily::pos() const
+{
+    return std::get<0>(m_memento->m_items);
+}
 
 QTextCharFormat FormatFamily::createCharFormat() const
 {

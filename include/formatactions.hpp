@@ -21,6 +21,7 @@ struct FormatBold : public FormatAction
 {
 	FormatBold(bool isBold, QTextEdit* textEditor);
 
+    int pos() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 	void setMemento(MementoUP memento) override;
@@ -49,6 +50,7 @@ struct FormatItalic : public FormatAction
 {
 	FormatItalic(bool isItalic, QTextEdit* textEditor);
 
+    int pos() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -79,6 +81,7 @@ struct FormatUnderline : public FormatAction
 {
 	FormatUnderline(bool isUnderline, QTextEdit* textEditor);
 
+    int pos() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -109,6 +112,7 @@ struct FormatColor : public FormatAction
 {
 	FormatColor(QColor color, QTextEdit* textEditor);
 
+    int pos() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -139,6 +143,7 @@ struct FormatUnderlineColor : public FormatAction
 {
 	FormatUnderlineColor(QColor color, QTextEdit* textEditor);
 
+    int pos() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -169,6 +174,7 @@ struct FormatSize : public FormatAction
 {
 	FormatSize(int size, QTextEdit* textEditor);
 
+    int pos() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
@@ -199,6 +205,7 @@ struct FormatFamily : public FormatAction
 {
 	FormatFamily(QString const& family, QTextEdit* textEditor);
 
+    int pos() const override;
 	QTextCharFormat createCharFormat() const override;
 	const Memento* getMemento() const override;
 
