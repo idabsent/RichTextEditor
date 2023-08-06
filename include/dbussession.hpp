@@ -11,7 +11,7 @@
 class DBusPublisher : public QDBusAbstractAdaptor
 {
 	Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", INTERFACE_NAME)
+	Q_CLASSINFO("D-Bus Interface", INTERFACE_NAME)
 public:
 	DBusPublisher(QObject* parent);
 
@@ -30,6 +30,42 @@ signals:
 	void action(QDBusVariant const& action);
 };
 
+struct Interaction : public QObject
+{
+	Interaction(QObject* parent = nullptr);
+	virtual void sendMessage(QDBusVariant const& msg) = 0;
+
+signals:
+	void messageReceived(QDBusVariant const& msg);
+
+private:
+	Q_OBJECT
+};
+
+struct DisabledInteraction : public Interaction
+{
+	void sendMessage(QDBusVariant const& msg) override
+	{	}
+};
+
+struct EnabledInteraction : public Interaction
+{
+	EnabledInteraction(QObject* parent = nullptr);
+
+	void initInstance(QString const& session);
+	void sendMessage(QDBusVariant const& msg) override;
+
+signals: //Only for internal use
+	void action(QDBusVariant const& action);
+
+private:
+	Q_OBJECT
+
+	DBusPublisher* m_server;
+	DBusSubscriber* m_client;
+	QDBusConnection m_connection;
+};
+
 struct DBusSession : public QObject
 {
 	void sendAction(ActionUP action);
@@ -43,10 +79,6 @@ struct DBusSession : public QObject
 
 signals:
 	void actionReceived(ActionType action, QByteArray const& raw);
-
-signals: //Only for internal use
-	void action(QDBusVariant const& action);
-
 private slots:
 	void parseMessage(QDBusVariant const& msg);
 
@@ -54,14 +86,9 @@ private:
 	Q_OBJECT
 
     DBusSession();
-	void initInstance(QString const& session);
-
 	QDBusVariant packPackage(QByteArray const& data, int appId, int actionType);
 
-	DBusPublisher* m_server;
-	DBusSubscriber* m_client;
-	QDBusConnection m_connection;
-
+	Interaction* m_interaction;
 	int m_appId;
 
 	static DBusSession* _instance;

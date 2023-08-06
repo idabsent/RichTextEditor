@@ -88,6 +88,7 @@ DBusActionsObserver::DBusActionsObserver(QTextEdit* textEditor, QObject* parent)
 
 void DBusActionsObserver::onDataReceived(ActionType type, QByteArray const& raw)
 {
+	qDebug() << FUNC_SIGN;
     auto data = raw;
 
     auto builder = GlobalMementoBuilder::instance();

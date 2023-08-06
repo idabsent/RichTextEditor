@@ -309,6 +309,17 @@ auto CLIApplication::process() -> void
 
     for (auto const& inner_opt : m_options)
     {
+        if (inner_opt.required && !m_parser.isSet(inner_opt.option))
+        {
+            std::cerr << QString{"Option {%1} with value name{%2} is required"}
+                    .arg(inner_opt.option.names().first())
+                    .arg(inner_opt.option.valueName())
+                    .toStdString()
+                << std::endl;
+
+            m_parser.showHelp(EXIT_FAILURE);
+        }
+
         if (m_parser.isSet(inner_opt.option))
         {
             auto fn = inner_opt.handler;
