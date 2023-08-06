@@ -10,8 +10,6 @@
 #include <type_traits>
 #include <tuple>
 
-static QList<MementoBuilder*> GLOBAL_BUILDERS;
-
 template <typename... Items>
 struct StreamItemsMemento : public Memento
 {

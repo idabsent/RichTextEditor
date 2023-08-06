@@ -35,7 +35,10 @@ struct DBusSession : public QObject
 	void sendAction(ActionUP action);
 	void sendString(QString const& str);
 
-	static void createInstance(QString const& session);
+	static void createDetached();
+	static void createDisabled();
+	static void createCommon();
+	static void createSession(QString const& session);
 	static DBusSession* instance();
 
 signals:

@@ -216,7 +216,6 @@ ActionUP GlobalMementoBuilder::buildAction(MementoUP memento)
 void GlobalMementoBuilder::createInstance(QTextEdit* editor)
 {
     auto builder = new GlobalMementoBuilder{ editor };
-    GLOBAL_BUILDERS << builder;
     _instance.reset(builder);
 }
 
@@ -293,21 +292,23 @@ void FormatIndent::execute()
 
     QTextCursor cursor = m_editor->textCursor();
     cursor.beginEditBlock();
-    if (cursor.currentList()) {
+    if (cursor.currentList())
+    {
         QTextListFormat listFmt = cursor.currentList()->format();
-        // See whether the line above is the list we want to move this item into,
-        // or whether we need a new list.
         QTextCursor above(cursor);
         above.movePosition(QTextCursor::Up);
-        if (above.currentList() && listFmt.indent() + indent == above.currentList()->format().indent()) {
+        if (above.currentList() && listFmt.indent() + indent == above.currentList()->format().indent())
+        {
             above.currentList()->add(cursor.block());
         }
-        else {
+        else
+        {
             listFmt.setIndent(listFmt.indent() + indent);
             cursor.createList(listFmt);
         }
     }
-    else {
+    else
+    {
         QTextBlockFormat blockFmt = cursor.blockFormat();
         blockFmt.setIndent(blockFmt.indent() + indent);
         cursor.setBlockFormat(blockFmt);

@@ -46,11 +46,26 @@ void DBusSession::initInstance(QString const& session)
 	}
 }
 
-void DBusSession::createInstance(QString const& session)
+void DBusSession::createSession(QString const& session)
 {
     qDebug() << FUNC_SIGN << "|" << session;
     _instance = new DBusSession{};
     _instance->initInstance(session);
+}
+
+void DBusSession::createCommon()
+{
+	createSession("common");
+}
+
+void DBusSession::createDisabled()
+{
+
+}
+
+void DBusSession::createDetached()
+{
+	createSession("session_" + tools::generate_random(0, 1000));
 }
 
 DBusSession* DBusSession::instance()
