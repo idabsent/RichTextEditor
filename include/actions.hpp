@@ -26,6 +26,12 @@ enum class ActionType : uint16_t
     EditCut,
     EditRedo,
     EditUndo,
+
+    FileOpen,
+    FileSave,
+    FileSaveAs,
+
+    DocNew,
     
     TextChange,
 };

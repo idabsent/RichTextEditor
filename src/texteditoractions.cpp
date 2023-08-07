@@ -579,3 +579,168 @@ void TextChangeAction::setMemento(MementoUP memento)
 
     throwInvalidMemento(casted);
 }
+
+FileOpenMemento::FileOpenMemento(QString const& path)
+    : StreamItemsMemento{path}
+{   }
+
+ActionType FileOpenMemento::getActionType() const
+{
+    return ActionType::FileOpen;
+}
+
+FileOpenAction::FileOpenAction(EditorTabWidget* docsEditor)
+    : m_memento{nullptr}
+    , m_docsEditor{docsEditor}
+{   }
+
+FileOpenAction::FileOpenAction(QString const& path, EditorTabWidget* docsEditor)
+    : m_memento{ std::make_unique<FileOpenMemento>(path) }
+    , m_docsEditor{docsEditor}
+{   }
+
+const Memento* FileOpenAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+//TODO implement
+void FileOpenAction::execute()
+{
+
+}
+
+void FileOpenAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<FileOpenMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}
+
+ActionType DocNewMemento::getActionType() const
+{
+    return ActionType::DocNew;
+}
+
+DocNewAction::DocNewAction(EditorTabWidget* docsEditor)
+    : m_memento{std::make_unique<DocNewMemento>()}
+    , m_docsEditor{docsEditor}
+{   }
+
+const Memento* DocNewAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void DocNewAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<DocNewMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}
+
+//TODO implementation
+void DocNewAction::execute()
+{
+
+}
+
+FileSaveAsMemento::FileSaveAsMemento(QString const& path)
+    : StreamItemsMemento{path}
+{   }
+
+ActionType FileSaveAsMemento::getActionType() const
+{
+    return ActionType::FileSaveAs;
+}
+
+FileSaveAsAction::FileSaveAsAction(EditorTabWidget* docsEditor)
+    : m_memento{nullptr}
+    , m_docsEditor{docsEditor}
+{   }
+
+FileSaveAsAction::FileSaveAsAction(QString const& path, EditorTabWidget* docsEditor)
+    : m_memento{std::make_unique<FileSaveAsMemento>(path)}
+    , m_docsEditor{docsEditor}
+{   }
+
+
+//TODO implementation
+void FileSaveAsAction::execute()
+{
+
+}
+
+const Memento* FileSaveAsAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void FileSaveAsAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<FileSaveAsMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}
+
+FileSaveMemento::FileSaveMemento(QString const& title)
+    : StreamItemsMemento{title}
+{   }
+
+ActionType FileSaveMemento::getActionType() const
+{
+    return ActionType::FileSave;
+}
+
+FileSaveAction::FileSaveAction(EditorTabWidget* docsEditor)
+    : m_memento{nullptr}
+    , m_docsEditor{docsEditor}
+{   }
+
+FileSaveAction::FileSaveAction(QString const& docTitle, EditorTabWidget* docsEditor)
+    : m_memento{std::make_unique<FileSaveMemento>(docTitle)}
+    , m_docsEditor{docsEditor}
+{   }
+
+
+//TODO implementation
+void FileSaveAction::execute()
+{
+
+}
+
+const Memento* FileSaveAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void FileSaveAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<FileSaveMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}

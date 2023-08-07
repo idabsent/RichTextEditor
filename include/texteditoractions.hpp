@@ -2,6 +2,7 @@
 
 #include "actions.hpp"
 #include "tools.hpp"
+#include "texteditorproxy.hpp"
 
 #include <QTextCursor>
 #include <QTextCharFormat>
@@ -304,4 +305,115 @@ private:
 
 	QTextEdit* m_editor;
 	TextChangedMementoUP m_memento;
+};
+
+struct FileOpenMemento : public StreamItemsMemento<QString>
+{
+	FileOpenMemento(QString const& memento);
+
+	ActionType getActionType() const override;
+
+	friend struct FileOpenAction;
+};
+
+using FileOpenMementoUP = std::unique_ptr<FileOpenMemento, std::default_delete<Memento>>;
+
+struct FileOpenAction : public Action
+{
+	FileOpenAction(EditorTabWidget* docsEditor);
+	FileOpenAction(QString const& path, EditorTabWidget* docsEditor);
+
+	void execute() override;
+	const Memento* getMemento() const override;
+
+protected:
+	void setMemento(MementoUP memento) override;
+
+private:
+	EditorTabWidget* m_docsEditor;
+	FileOpenMementoUP m_memento;
+
+	friend struct GlobalMementoBuilder;
+};
+
+struct DocNewMemento : public EmptyMemento
+{
+	ActionType getActionType() const override;
+
+	friend struct DocNewAction;
+};
+
+using DocNewMementoUP = std::unique_ptr<DocNewMemento, std::default_delete<Memento>>;
+
+struct DocNewAction : public Action
+{
+	DocNewAction(EditorTabWidget* docsEditor);
+
+	void execute() override;
+	const Memento* getMemento() const override;
+
+protected:
+	void setMemento(MementoUP memento) override;
+
+private:
+	friend struct GlobalMementoBuilder;
+
+	EditorTabWidget* m_docsEditor;
+	DocNewMementoUP m_memento;
+};
+
+struct FileSaveAsMemento : public StreamItemsMemento<QString>
+{
+	FileSaveAsMemento(QString const& path);
+
+	ActionType getActionType() const override;
+
+	friend struct FileSaveAsAction;
+};
+
+using FileSaveAsMementoUP = std::unique_ptr<FileSaveAsMemento, std::default_delete<Memento>>;
+
+struct FileSaveAsAction : public Action
+{
+	FileSaveAsAction(EditorTabWidget* editor);
+	FileSaveAsAction(QString const& path, EditorTabWidget* docsEditor);
+
+	void execute() override;
+	const Memento* getMemento() const override;
+
+protected:
+	void setMemento(MementoUP memento) override;
+
+private:
+	EditorTabWidget* m_docsEditor;
+	FileSaveAsMementoUP m_memento;
+
+	friend struct GlobalMementoBuilder;
+};
+
+struct FileSaveMemento : public StreamItemsMemento<QString>
+{
+	FileSaveMemento(QString const& title);
+
+	ActionType getActionType() const override;
+};
+
+using FileSaveMementoUP = std::unique_ptr<FileSaveMemento, std::default_delete<Memento>>;
+
+struct FileSaveAction : public Action
+{
+	FileSaveAction(EditorTabWidget* docsEditor);
+	FileSaveAction(QString const& docTitle, EditorTabWidget* docsEditor);
+
+	void execute() override;
+	const Memento* getMemento() const override;
+
+protected:
+	void setMemento(MementoUP memento) override;
+
+private:
+	FileSaveMementoUP m_memento;
+	EditorTabWidget* m_docsEditor;
+
+	friend struct GlobalMementoBuilder;
 };

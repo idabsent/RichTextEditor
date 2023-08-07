@@ -14,7 +14,7 @@
 #include <iterator>
 
 RichTextEditor::RichTextEditor(QMainWindow* parent)
-    : m_textEditor{nullptr}
+    : m_docsEditor{nullptr}
     , m_builder{new MenuBarBuilder{this}}
     , m_textObserver{nullptr}
 {   }
@@ -92,7 +92,7 @@ void RichTextEditor::setupFormatActions()
 
     auto boldFn = [=](QAction* qAction)
     {
-        return new FormatBold{qAction->isChecked(), m_textEditor};
+        return new FormatBold{ qAction->isChecked(), m_docsEditor->getEditor() };
     };
 
     auto boldAction = m_builder->setActionShortcut(QKeySequence::Bold)
@@ -102,7 +102,7 @@ void RichTextEditor::setupFormatActions()
 
     auto italicFn = [=](QAction* qAction)
     {
-        return new FormatItalic{ qAction->isChecked(), m_textEditor };
+        return new FormatItalic{ qAction->isChecked(), m_docsEditor->getEditor() };
     };
 
     auto italicAction = m_builder->setActionShortcut(QKeySequence::Italic)
@@ -112,7 +112,7 @@ void RichTextEditor::setupFormatActions()
 
     auto underlineFn = [=](QAction* qAction)
     {
-        return new FormatUnderline{ qAction->isChecked(), m_textEditor };
+        return new FormatUnderline{ qAction->isChecked(), m_docsEditor->getEditor() };
     };
 
     auto underlineAction = m_builder->setActionShortcut(QKeySequence::Underline)
@@ -123,7 +123,7 @@ void RichTextEditor::setupFormatActions()
 
     auto alignLeftFn = [=](QAction* action)
     {
-        return new FormatAlignLeft{ m_textEditor };
+        return new FormatAlignLeft{ m_docsEditor->getEditor() };
     };
 
     auto aligntLeftAction = m_builder->setActionShortcut(Qt::ALT | Qt::Key_L)
@@ -132,7 +132,7 @@ void RichTextEditor::setupFormatActions()
 
     auto alignCenterFn = [=](QAction* action)
     {
-        return new FormatAlignCenter{ m_textEditor };
+        return new FormatAlignCenter{ m_docsEditor->getEditor() };
     };
 
     auto alignCenterAction = m_builder->setActionShortcut(Qt::ALT | Qt::Key_C)
@@ -141,7 +141,7 @@ void RichTextEditor::setupFormatActions()
 
     auto alignRightFn = [=](QAction* action)
     {
-        return new FormatAlignRight{ m_textEditor };
+        return new FormatAlignRight{ m_docsEditor->getEditor() };
     };
 
     auto alignRightAction = m_builder->setActionShortcut(Qt::ALT | Qt::Key_R)
@@ -150,7 +150,7 @@ void RichTextEditor::setupFormatActions()
 
     auto alignJustifyFn = [=](QAction* action)
     {
-        return new FormatAlignJustify{ m_textEditor };
+        return new FormatAlignJustify{ m_docsEditor->getEditor() };
     };
 
     auto alignJustifyAction = m_builder->setActionShortcut(Qt::ALT | Qt::Key_J)
@@ -160,7 +160,7 @@ void RichTextEditor::setupFormatActions()
 
     auto indentFn = [=](QAction* action)
     {
-        return new FormatIndent{ 1, m_textEditor };
+        return new FormatIndent{ 1, m_docsEditor->getEditor() };
     };
 
     auto indentAction = m_builder->setActionShortcut(Qt::ALT | Qt::SHIFT | Qt::Key_I)
@@ -169,7 +169,7 @@ void RichTextEditor::setupFormatActions()
 
     auto unindentFn = [=](QAction* action)
     {
-        return new FormatIndent{ -1, m_textEditor };
+        return new FormatIndent{ -1, m_docsEditor->getEditor() };
     };
 
     auto unindentAction = m_builder->setActionShortcut(Qt::ALT | Qt::SHIFT | Qt::Key_U)
@@ -178,8 +178,8 @@ void RichTextEditor::setupFormatActions()
 
     auto colorFn = [=](QAction* qAction)
     {
-        auto color = QColorDialog::getColor(m_textEditor->textColor(), this);
-        return new FormatColor{ color, m_textEditor };
+        auto color = QColorDialog::getColor(m_docsEditor->getEditor()->textColor(), this);
+        return new FormatColor{ color, m_docsEditor->getEditor() };
     };
 
     auto colorAction = m_builder->setActionIcon(QIcon{ ":/icons/formatcolor.png" })
@@ -187,8 +187,8 @@ void RichTextEditor::setupFormatActions()
 
     auto underlineColorFn = [=](QAction* indent)
     {
-        auto color = QColorDialog::getColor(m_textEditor->textBackgroundColor(), m_textEditor);
-        return new FormatUnderlineColor{ color, m_textEditor };
+        auto color = QColorDialog::getColor(m_docsEditor->getEditor()->textBackgroundColor(), m_docsEditor->getEditor());
+        return new FormatUnderlineColor{ color, m_docsEditor->getEditor() };
     };
 
     auto underlineColorAction = m_builder->setActionIcon(QIcon{ ":/icons/formatunderlinecolor.png" })
@@ -216,14 +216,14 @@ void RichTextEditor::setupFontSelectorToolBar()
     connect(sizeSelector, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [=] (int index)
         {
             auto size = sizeSelector->itemText(index).toInt();
-            auto action = std::make_unique<FormatSize>(size, m_textEditor);
+            auto action = std::make_unique<FormatSize>(size, m_docsEditor->getEditor());
             action->execute();
         }
     );
 
     connect(fontSelector, &QFontComboBox::currentFontChanged, this, [=](QFont const& font)
         {
-            auto action = std::make_unique<FormatFamily>(font.family(), m_textEditor);
+            auto action = std::make_unique<FormatFamily>(font.family(), m_docsEditor->getEditor());
             action->execute();
         }
     );
@@ -235,9 +235,10 @@ void RichTextEditor::setupFontSelectorToolBar()
 void RichTextEditor::buildEditorAndObjects()
 {
     auto editor = new AdditionalEmiterTextEditor;
+    m_docsEditor = new EditorTabWidget{ editor };
+    m_docsEditor->addDocument("Untitled", new QTextDocument);
     GlobalMementoBuilder::createInstance(editor);
-    m_actionsObserver = new DBusActionsObserver{m_textEditor, this};
-    m_textEditor = editor;
-    setCentralWidget(m_textEditor);
+    m_actionsObserver = new DBusActionsObserver{m_docsEditor->getEditor(), this};editor->setDocumentTitle("Example title");
+    setCentralWidget(m_docsEditor);
     m_textObserver = new TextChangeObserver{ editor, 10 };
 }

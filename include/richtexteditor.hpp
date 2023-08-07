@@ -5,6 +5,7 @@
 
 #include "menubarbuilder.hpp"
 #include "editorobservers.hpp"
+#include "texteditorproxy.hpp"
 
 struct RichTextEditor : public QMainWindow
 {
@@ -22,7 +23,7 @@ private:
 
     void buildEditorAndObjects();
 
-    QTextEdit* m_textEditor;
+    EditorTabWidget* m_docsEditor;
     MenuBarBuilder* m_builder;
     TextChangeObserver* m_textObserver;
     DBusActionsObserver* m_actionsObserver;
