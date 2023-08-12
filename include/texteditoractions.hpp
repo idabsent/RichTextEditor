@@ -2,7 +2,7 @@
 
 #include "actions.hpp"
 #include "tools.hpp"
-#include "texteditorproxy.hpp"
+#include "editortabwidget.hpp"
 
 #include <QTextCursor>
 #include <QTextCharFormat>
@@ -82,14 +82,14 @@ struct GlobalMementoBuilder : public MementoBuilder
 	ActionUP buildAction(MementoUP memento) override;
 	MementoUP buildMemento(QByteArray&& data, ActionType action) override;
 
-	static void createInstance(QTextEdit* editor);
+    static void createInstance(EditorTabWidget* docsEditor);
     static GlobalMementoBuilder* instance();
 
 private:
     static std::unique_ptr<GlobalMementoBuilder> _instance;
-    GlobalMementoBuilder(QTextEdit* editor);
+    GlobalMementoBuilder(EditorTabWidget* docsEditor);
 
-	QTextEdit* m_editor;
+    EditorTabWidget* m_docsEditor;
 };
 
 struct FormatAction : public Action
@@ -309,7 +309,8 @@ private:
 
 struct FileOpenMemento : public StreamItemsMemento<QString>
 {
-	FileOpenMemento(QString const& memento);
+    FileOpenMemento() = default;
+    FileOpenMemento(QString const& path);
 
 	ActionType getActionType() const override;
 
@@ -321,7 +322,7 @@ using FileOpenMementoUP = std::unique_ptr<FileOpenMemento, std::default_delete<M
 struct FileOpenAction : public Action
 {
 	FileOpenAction(EditorTabWidget* docsEditor);
-	FileOpenAction(QString const& path, EditorTabWidget* docsEditor);
+    FileOpenAction(QString const& path, EditorTabWidget* docsEditor);
 
 	void execute() override;
 	const Memento* getMemento() const override;
@@ -338,6 +339,7 @@ private:
 
 struct DocNewMemento : public EmptyMemento
 {
+    DocNewMemento() = default;
 	ActionType getActionType() const override;
 
 	friend struct DocNewAction;
@@ -364,7 +366,8 @@ private:
 
 struct FileSaveAsMemento : public StreamItemsMemento<QString>
 {
-	FileSaveAsMemento(QString const& path);
+    FileSaveAsMemento() = default;
+    FileSaveAsMemento(QString const& path);
 
 	ActionType getActionType() const override;
 
@@ -376,7 +379,7 @@ using FileSaveAsMementoUP = std::unique_ptr<FileSaveAsMemento, std::default_dele
 struct FileSaveAsAction : public Action
 {
 	FileSaveAsAction(EditorTabWidget* editor);
-	FileSaveAsAction(QString const& path, EditorTabWidget* docsEditor);
+    FileSaveAsAction(QString const& path, EditorTabWidget* docsEditor);
 
 	void execute() override;
 	const Memento* getMemento() const override;
@@ -393,9 +396,12 @@ private:
 
 struct FileSaveMemento : public StreamItemsMemento<QString>
 {
-	FileSaveMemento(QString const& title);
+    FileSaveMemento() = default;
+    FileSaveMemento(QString const& title);
 
 	ActionType getActionType() const override;
+
+	friend struct FileSaveAction;
 };
 
 using FileSaveMementoUP = std::unique_ptr<FileSaveMemento, std::default_delete<Memento>>;
@@ -403,7 +409,7 @@ using FileSaveMementoUP = std::unique_ptr<FileSaveMemento, std::default_delete<M
 struct FileSaveAction : public Action
 {
 	FileSaveAction(EditorTabWidget* docsEditor);
-	FileSaveAction(QString const& docTitle, EditorTabWidget* docsEditor);
+    FileSaveAction(QString const& docTitle, EditorTabWidget* docsEditor);
 
 	void execute() override;
 	const Memento* getMemento() const override;
@@ -416,4 +422,140 @@ private:
 	EditorTabWidget* m_docsEditor;
 
 	friend struct GlobalMementoBuilder;
+};
+
+struct EditCopyMemento : public StreamItemsMemento<int, int>
+{
+    EditCopyMemento() = default;
+    EditCopyMemento(QTextCursor const& cursor);
+    ActionType getActionType() const override;
+
+    friend struct EditCopyAction;
+};
+
+using EditCopyMementoUP = std::unique_ptr<EditCopyMemento, std::default_delete<Memento>>;
+
+struct EditCopyAction : public Action
+{
+    EditCopyAction(QTextEdit* textEditor);
+
+    void execute() override;
+    const Memento* getMemento() const override;
+
+protected:
+    void setMemento(MementoUP memento) override;
+
+private:
+    QTextEdit* m_textEditor;
+    EditCopyMementoUP m_memento;
+
+    friend struct GlobalMementoBuilder;
+};
+
+struct EditCutMemento : public StreamItemsMemento<int, int>
+{
+    EditCutMemento() = default;
+    EditCutMemento(QTextCursor const& cursor);
+
+    ActionType getActionType() const override;
+};
+
+using EditCutMementoUP = std::unique_ptr<EditCutMemento, std::default_delete<Memento>>;
+
+struct EditCutAction : public Action
+{
+    EditCutAction(QTextEdit* textEditor);
+
+    void execute() override;
+    const Memento* getMemento() const override;
+
+protected:
+    void setMemento(MementoUP memento) override;
+
+private:
+    QTextEdit* m_textEditor;
+    EditCutMementoUP m_memento;
+
+    friend struct GlobalMementoBuilder;
+};
+
+struct EditPasteMemento : public StreamItemsMemento<int, int>
+{
+    EditPasteMemento() = default;
+    EditPasteMemento(QTextCursor const& cursor);
+
+    ActionType getActionType() const override;
+
+    friend struct EditPasteAction;
+};
+
+using EditPasteMementoUP = std::unique_ptr<EditPasteMemento, std::default_delete<Memento>>;
+
+struct EditPasteAction : public Action
+{
+    EditPasteAction(QTextEdit* textEditor);
+
+    void execute() override;
+    const Memento* getMemento() const override;
+
+protected:
+    void setMemento(MementoUP memento) override;
+
+private:
+    QTextEdit* m_textEditor;
+    EditPasteMementoUP m_memento;
+
+    friend struct GlobalMementoBuilder;
+};
+
+struct EditRedoMemento : public EmptyMemento
+{
+    EditRedoMemento() = default;
+
+    ActionType getActionType() const override;
+};
+
+using EditRedoMementoUP = std::unique_ptr<EditRedoMemento, std::default_delete<Memento>>;
+
+struct EditRedoAction : public Action
+{
+    EditRedoAction(QTextEdit* textEditor);
+
+    void execute() override;
+    const Memento* getMemento() const override;
+
+protected:
+    void setMemento(MementoUP memento) override;
+
+private:
+    QTextEdit* m_textEditor;
+    EditRedoMementoUP m_memento;
+
+    friend struct GlobalMementoBuilder;
+};
+
+struct EditUndoMemento : public EmptyMemento
+{
+    EditUndoMemento() = default;
+
+    ActionType getActionType() const override;
+};
+
+using EditUndoMementoUP = std::unique_ptr<EditUndoMemento, std::default_delete<Memento>>;
+
+struct EditUndoAction : public Action
+{
+    EditUndoAction(QTextEdit* textEditor);
+
+    void execute() override;
+    const Memento* getMemento() const override;
+
+protected:
+    void setMemento(MementoUP memento) override;
+
+private:
+    QTextEdit* m_textEditor;
+    EditUndoMementoUP m_memento;
+
+    friend struct GlobalMementoBuilder;
 };

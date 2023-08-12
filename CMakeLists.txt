@@ -31,7 +31,7 @@ set(HEADER_FILES
     include/dbussession.hpp
     include/tools.hpp
     include/config.in
-    include/texteditorproxy.hpp
+    include/editortabwidget.hpp
 )
 
 set(SOURCE_FILES
@@ -42,7 +42,7 @@ set(SOURCE_FILES
     src/formatactions.cpp
     src/dbussession.cpp
     src/editorobservers.cpp
-    src/texteditorproxy.cpp
+    src/editortabwidget.cpp
 )
 
 qt5_add_translation(QM_FILES ${TS_FILES})

@@ -10,6 +10,8 @@
 #define toolsTypeName(Val) std::string{typeid(Val).name()}
 #define throwInvalidMemento(memento) \
 	throw std::runtime_error{std::string{FUNC_SIGN} + std::string{" | Received invalid memento type: "} + toolsTypeName(memento.get())};
+#define TODO(msg) \
+    throw std::runtime_error{std::string{FUNC_SIGN} + " " + msg};
 
 #if defined(_MSC_VER)
 #define FUNC_SIGN __FUNCSIG__

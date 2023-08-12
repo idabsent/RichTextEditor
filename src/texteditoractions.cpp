@@ -3,13 +3,19 @@
 #include "tools.hpp"
 
 #include <exception>
+#include <cerrno>
+#include <cstring>
+
 #include <QDataStream>
+#include <QTextStream>
 #include <QTextList>
+#include <QFile>
+#include <QApplication>
 
 std::unique_ptr<GlobalMementoBuilder> GlobalMementoBuilder::_instance;
 
-GlobalMementoBuilder::GlobalMementoBuilder(QTextEdit* editor)
-	: m_editor{editor}
+GlobalMementoBuilder::GlobalMementoBuilder(EditorTabWidget* docsEditor)
+    : m_docsEditor{docsEditor}
 {	}
 
 bool GlobalMementoBuilder::supportAction(ActionType action) const
@@ -26,9 +32,17 @@ bool GlobalMementoBuilder::supportAction(ActionType action) const
 	case ActionType::FormatIndent:
 	case ActionType::FormatUnindent:
 	case ActionType::FormatColor:
-	case ActionType::FormatUnderlineColor:
-	case ActionType::FormatChecked:
+    case ActionType::FormatUnderlineColor:
+    case ActionType::FileOpen:
+    case ActionType::FileSave:
+    case ActionType::FileSaveAs:
+    case ActionType::DocNew:
     case ActionType::TextChange:
+    case ActionType::EditCopy:
+    case ActionType::EditCut:
+    case ActionType::EditPaste:
+    case ActionType::EditRedo:
+    case ActionType::EditUndo:
 		return true;
 	default:
 		return false;
@@ -73,7 +87,32 @@ MementoUP GlobalMementoBuilder::buildMemento(QByteArray&& data, ActionType actio
 	case ActionType::FormatUnderlineColor:
         memento.reset(new UnderlineColorMemento);
         break;
-    case ActionType::FormatChecked:
+    case ActionType::FileOpen:
+        memento.reset(new FileOpenMemento);
+        break;
+    case ActionType::FileSave:
+        memento.reset(new FileSaveMemento);
+        break;
+    case ActionType::FileSaveAs:
+        memento.reset(new FileSaveAsMemento);
+        break;
+    case ActionType::DocNew:
+        memento.reset(new DocNewMemento);
+        break;
+    case ActionType::EditCopy:
+        memento.reset(new EditCopyMemento);
+        break;
+    case ActionType::EditPaste:
+        memento.reset(new EditPasteMemento);
+        break;
+    case ActionType::EditCut:
+        memento.reset(new EditCutMemento);
+        break;
+    case ActionType::EditUndo:
+        memento.reset(new EditUndoMemento);
+        break;
+    case ActionType::EditRedo:
+        memento.reset(new EditRedoMemento);
         break;
     case ActionType::FontSize:
         memento.reset(new SizeMemento);
@@ -105,49 +144,49 @@ ActionUP GlobalMementoBuilder::buildAction(MementoUP memento)
     {
     case ActionType::FormatBold:
     {
-        auto o_action = new FormatBold{m_editor};
+        auto o_action = new FormatBold{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatItalic:
     {
-        auto o_action = new FormatItalic{m_editor};
+        auto o_action = new FormatItalic{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatUnderline:
     {
-        auto o_action = new FormatUnderline{m_editor};
+        auto o_action = new FormatUnderline{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatAlignLeft:
     {
-        auto o_action = new FormatAlignLeft{m_editor};
+        auto o_action = new FormatAlignLeft{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatAlignRight:
     {
-        auto o_action = new FormatAlignRight{m_editor};
+        auto o_action = new FormatAlignRight{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatAlignCenter:
     {
-        auto o_action = new FormatAlignCenter{m_editor};
+        auto o_action = new FormatAlignCenter{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatAlignJustify:
     {
-        auto o_action = new FormatAlignJustify{m_editor};
+        auto o_action = new FormatAlignJustify{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
@@ -155,49 +194,112 @@ ActionUP GlobalMementoBuilder::buildAction(MementoUP memento)
     case ActionType::FormatIndent:
     case ActionType::FormatUnindent:
     {
-        auto o_action = new FormatIndent{m_editor};
+        auto o_action = new FormatIndent{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatColor:
     {
-        auto o_action = new FormatColor{m_editor};
+        auto o_action = new FormatColor{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatUnderlineColor:
     {
-        auto o_action = new FormatColor{m_editor};
+        auto o_action = new FormatColor{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FormatChecked:
     {
-        auto o_action = new FormatChecked{m_editor};
+        auto o_action = new FormatChecked{m_docsEditor->getEditor()};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FileOpen:
+    {
+        auto o_action = new FileOpenAction{m_docsEditor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FileSave:
+    {
+        auto o_action = new FileSaveAction{m_docsEditor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::FileSaveAs:
+    {
+        auto o_action = new FileSaveAsAction{m_docsEditor};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::EditCopy:
+    {
+        auto o_action = new EditCopyAction{m_docsEditor->getEditor()};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::EditCut:
+    {
+        auto o_action = new EditCutAction{m_docsEditor->getEditor()};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::EditPaste:
+    {
+        auto o_action = new EditPasteAction{m_docsEditor->getEditor()};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::EditUndo:
+    {
+        auto o_action = new EditUndoAction{m_docsEditor->getEditor()};
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::EditRedo:
+    {
+        auto o_action = new EditRedoAction{m_docsEditor->getEditor()};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FontSize:
     {
-        auto o_action = new FormatSize{ m_editor };
+        auto o_action = new FormatSize{ m_docsEditor->getEditor() };
+        o_action->setMemento(std::move(memento));
+        action.reset(o_action);
+        break;
+    }
+    case ActionType::DocNew:
+    {
+        auto o_action = new DocNewAction{m_docsEditor};
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::FontFamily:
     {
-        auto o_action = new FormatFamily{ m_editor };
+        auto o_action = new FormatFamily{ m_docsEditor->getEditor() };
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
     }
     case ActionType::TextChange:
     {
-        auto o_action = new TextChangeAction{ m_editor };
+        auto o_action = new TextChangeAction{ m_docsEditor->getEditor() };
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
@@ -213,9 +315,9 @@ ActionUP GlobalMementoBuilder::buildAction(MementoUP memento)
     return action;
 }
 
-void GlobalMementoBuilder::createInstance(QTextEdit* editor)
+void GlobalMementoBuilder::createInstance(EditorTabWidget* docsEditor)
 {
-    auto builder = new GlobalMementoBuilder{ editor };
+    auto builder = new GlobalMementoBuilder{ docsEditor };
     _instance.reset(builder);
 }
 
@@ -607,7 +709,25 @@ const Memento* FileOpenAction::getMemento() const
 //TODO implement
 void FileOpenAction::execute()
 {
+    auto path = std::get<0>(m_memento->m_items);
 
+    QFile file{path};
+    if (!file.open(QIODevice::ReadOnly))
+    {
+        throw std::runtime_error{
+            QString{"Can't open file{%1}. Error{%2}"}
+                .arg(path)
+                .arg(std::strerror(errno))
+                .toStdString()
+        };
+    }
+
+    QTextStream file_stream{&file};
+    auto content = file_stream.readAll();
+    auto doc = new QTextDocument;
+    doc->setHtml(content);
+
+    m_docsEditor->addDocument(path, doc);
 }
 
 void FileOpenAction::setMemento(MementoUP memento)
@@ -651,10 +771,9 @@ void DocNewAction::setMemento(MementoUP memento)
     throwInvalidMemento(casted);
 }
 
-//TODO implementation
 void DocNewAction::execute()
 {
-
+    m_docsEditor->addDocument(QApplication::tr("Untitled"), new QTextDocument);
 }
 
 FileSaveAsMemento::FileSaveAsMemento(QString const& path)
@@ -676,11 +795,27 @@ FileSaveAsAction::FileSaveAsAction(QString const& path, EditorTabWidget* docsEdi
     , m_docsEditor{docsEditor}
 {   }
 
-
 //TODO implementation
 void FileSaveAsAction::execute()
 {
+    auto path = std::get<0>(m_memento->m_items);
+    QFile file{path};
 
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        throw std::runtime_error{
+            QString{"Cann't open file. Error{%1}"}
+                .arg(std::strerror(errno))
+                .toStdString()
+        };
+    }
+
+    QTextStream file_stream{&file};
+    auto doc = m_docsEditor->getCurrentDocument();
+    auto content = doc->toHtml();
+    file_stream << content;
+    file_stream.flush();
+    m_docsEditor->changeCurrentTitle(path);
 }
 
 const Memento* FileSaveAsAction::getMemento() const
@@ -720,11 +855,28 @@ FileSaveAction::FileSaveAction(QString const& docTitle, EditorTabWidget* docsEdi
     , m_docsEditor{docsEditor}
 {   }
 
-
 //TODO implementation
 void FileSaveAction::execute()
 {
+    auto path = std::get<0>(m_memento->m_items);
+    auto document = m_docsEditor->getCurrentDocument();
+    auto content = document->toHtml();
 
+    QFile file{path};
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        throw std::runtime_error{
+            QString{"Can't open file. Error{%1}"}
+                .arg(std::strerror(errno))
+                .toStdString()
+        };
+    }
+
+    QTextStream file_stream{&file};
+    file_stream << content;
+    file_stream.flush();
+
+    m_docsEditor->changeCurrentTitle(path);
 }
 
 const Memento* FileSaveAction::getMemento() const
@@ -735,6 +887,183 @@ const Memento* FileSaveAction::getMemento() const
 void FileSaveAction::setMemento(MementoUP memento)
 {
     auto casted = tools::unique_dyn_cast<FileSaveMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}
+
+EditCopyMemento::EditCopyMemento(QTextCursor const& cursor)
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd()}
+{   }
+
+ActionType EditCopyMemento::getActionType() const
+{
+    return ActionType::EditCopy;
+}
+
+EditCopyAction::EditCopyAction(QTextEdit* textEditor)
+    : m_textEditor{textEditor}
+    , m_memento{std::make_unique<EditCopyMemento>(textEditor->textCursor())}
+{   }
+
+void EditCopyAction::execute()
+{
+    TODO("implement");
+}
+
+const Memento* EditCopyAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void EditCopyAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<EditCopyMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}
+
+EditCutMemento::EditCutMemento(QTextCursor const& cursor)
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd()}
+{   }
+
+ActionType EditCutMemento::getActionType() const
+{
+    return ActionType::EditCut;
+}
+
+EditCutAction::EditCutAction(QTextEdit* textEditor)
+    : m_textEditor{textEditor}
+    , m_memento{std::make_unique<EditCutMemento>(textEditor->textCursor())}
+{   }
+
+void EditCutAction::execute()
+{
+    TODO("implement");
+}
+
+const Memento* EditCutAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void EditCutAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<EditCutMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}
+
+EditPasteMemento::EditPasteMemento(QTextCursor const& cursor)
+    : StreamItemsMemento{cursor.selectionStart(), cursor.selectionEnd()}
+{   }
+
+ActionType EditPasteMemento::getActionType() const
+{
+    return ActionType::EditPaste;
+}
+
+EditPasteAction::EditPasteAction(QTextEdit* textEditor)
+    : m_textEditor{textEditor}
+    , m_memento{std::make_unique<EditPasteMemento>(textEditor->textCursor())}
+{   }
+
+void EditPasteAction::execute()
+{
+    TODO("implement");
+}
+
+const Memento* EditPasteAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void EditPasteAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<EditPasteMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}
+
+ActionType EditRedoMemento::getActionType() const
+{
+    return ActionType::EditRedo;
+}
+
+EditRedoAction::EditRedoAction(QTextEdit* textEditor)
+    : m_textEditor{textEditor}
+    , m_memento{std::make_unique<EditRedoMemento>()}
+{   }
+
+void EditRedoAction::execute()
+{
+    TODO("implement");
+}
+
+const Memento* EditRedoAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void EditRedoAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<EditRedoMemento>(std::move(memento));
+
+    if (casted)
+    {
+        m_memento = std::move(casted);
+        return;
+    }
+
+    throwInvalidMemento(casted);
+}
+
+ActionType EditUndoMemento::getActionType() const
+{
+    return ActionType::EditUndo;
+}
+
+EditUndoAction::EditUndoAction(QTextEdit* textEditor)
+    : m_textEditor{textEditor}
+    , m_memento{std::make_unique<EditUndoMemento>()}
+{   }
+
+void EditUndoAction::execute()
+{
+    TODO("implement");
+}
+
+const Memento* EditUndoAction::getMemento() const
+{
+    return m_memento.get();
+}
+
+void EditUndoAction::setMemento(MementoUP memento)
+{
+    auto casted = tools::unique_dyn_cast<EditUndoMemento>(std::move(memento));
 
     if (casted)
     {

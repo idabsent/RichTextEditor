@@ -47,10 +47,10 @@ private:
 
 auto main(int argc, char* argv[]) -> int
 {
+    QApplication app(argc, argv);
+
     try
     {
-        QApplication app(argc, argv);
-
         CLIApplication cliApp{ app };
 
         QCommandLineOption detached{
@@ -118,6 +118,7 @@ auto main(int argc, char* argv[]) -> int
     catch(std::exception const& excp)
     {
         std::cerr << excp.what() << std::endl;
+        app.exit(EXIT_FAILURE);
     }
 }
 

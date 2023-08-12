@@ -9,6 +9,9 @@
 #include <QFontDatabase>
 #include <QDebug>
 #include <QColorDialog>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QApplication>
 
 #include <algorithm>
 #include <iterator>
@@ -33,27 +36,58 @@ void RichTextEditor::setupFileActions()
 {
     m_builder->startBuild(tr("File actions"), tr("File"));
 
+    auto newFn = [&](QAction* action)
+    {
+        return new DocNewAction{m_docsEditor};
+    };
+
     auto newAction = m_builder->setActionShortcut(QKeySequence::New)
         ->setActionIcon(QIcon{":/icons/filenew.png"})
-        ->createAction(tr("&New"));
+        ->createAction(tr("&New"), newFn);
+
+    auto openFn = [&](QAction* action)
+    {
+        auto path = QFileDialog::getOpenFileName(this);
+        return path.isEmpty() ? nullptr : new FileOpenAction{path, m_docsEditor};
+    };
 
     auto openAction = m_builder->setActionShortcut(QKeySequence::Open)
         ->setActionIcon(QIcon{":/icons/fileopen.png"})
-        ->createAction(tr("&Open"));
+        ->createAction(tr("&Open"), openFn);
+
+    auto saveFn = [&](QAction* action)
+    {
+        QFileInfo info{m_docsEditor->getEditor()->documentTitle()};
+        auto path = info.exists() ? info.absoluteFilePath() : QFileDialog::getSaveFileName(this);
+
+        return path.isEmpty() ? nullptr : new FileSaveAction{path, m_docsEditor};
+    };
 
     auto saveAction = m_builder->setActionShortcut(QKeySequence::Save)
         ->setActionIcon(QIcon{":/icons/filesave.png"})
         ->enableSepartorToMenu()
-        ->createAction(tr("&Save"));
+        ->createAction(tr("&Save"), saveFn);
+
+    auto saveAsFn = [&](QAction* action)
+    {
+        auto path = QFileDialog::getSaveFileName(this);
+        return path.isEmpty() ? nullptr : new FileSaveAsAction{path, m_docsEditor};
+    };
 
     auto saveAsAction = m_builder->setActionShortcut(Qt::CTRL | Qt::SHIFT | Qt::Key_S)
         ->disableForToolBar()
-        ->createAction(tr("Save as"));
+        ->createAction(tr("Save as"), saveAsFn);
+
+    auto quitFn = [&](QAction* action)
+    {
+        QApplication::exit(EXIT_SUCCESS);
+        return nullptr;
+    };
 
     auto quitAction = m_builder->setActionShortcut(QKeySequence::Quit)
         ->disableForToolBar()
         ->enableSepartorToMenu()
-        ->createAction(tr("Quit"));
+        ->createAction(tr("Quit"), quitFn);
 
     m_builder->endBuild();
 }
@@ -62,26 +96,51 @@ void RichTextEditor::setupEditActions()
 {
     m_builder->startBuild(tr("Edit actions"), tr("Edit"));
 
+    auto undoFn = [&](QAction* action)
+    {
+        return new EditUndoAction{m_docsEditor->getEditor()};
+    };
+
     auto undoAction = m_builder->setActionShortcut(QKeySequence::Undo)
         ->setActionIcon(QIcon{":/icons/editundo.png"})
-        ->createAction(tr("&Undo"));
+        ->createAction(tr("&Undo"), undoFn);
+
+    auto redoFn = [&](QAction* action)
+    {
+        return new EditRedoAction{m_docsEditor->getEditor()};
+    };
 
     auto redoAction = m_builder->setActionShortcut(QKeySequence::Redo)
         ->setActionIcon(QIcon{":/icons/editredo.png"})
-        ->createAction(tr("&Redo"));
+        ->createAction(tr("&Redo"), redoFn);
+
+    auto copyFn = [&](QAction* action)
+    {
+        return new EditCopyAction{m_docsEditor->getEditor()};
+    };
 
     auto copyAction = m_builder->setActionShortcut(QKeySequence::Copy)
         ->setActionIcon(QIcon{":/icons/editcopy.png"})
         ->enableSepartorToMenu()
-        ->createAction(tr("&Copy"));
+        ->createAction(tr("&Copy"), copyFn);
+
+    auto cutFn = [&](QAction* action)
+    {
+        return new EditCutAction{m_docsEditor->getEditor()};
+    };
 
     auto cutAction = m_builder->setActionShortcut(QKeySequence::Cut)
         ->setActionIcon(QIcon{":/icons/editcut.png"})
-        ->createAction(tr("&Cut"));
+        ->createAction(tr("&Cut"), cutFn);
+
+    auto pasteFn = [&](QAction* action)
+    {
+        return new EditPasteAction{m_docsEditor->getEditor()};
+    };
 
     auto pasteAction = m_builder->setActionShortcut(QKeySequence::Paste)
         ->setActionIcon(QIcon{":/icons/editpaste.png"})
-        ->createAction(tr("&Paste"));
+        ->createAction(tr("&Paste"), pasteFn);
 
     m_builder->endBuild();
 }
@@ -236,8 +295,7 @@ void RichTextEditor::buildEditorAndObjects()
 {
     auto editor = new AdditionalEmiterTextEditor;
     m_docsEditor = new EditorTabWidget{ editor };
-    m_docsEditor->addDocument("Untitled", new QTextDocument);
-    GlobalMementoBuilder::createInstance(editor);
+    GlobalMementoBuilder::createInstance(m_docsEditor);
     m_actionsObserver = new DBusActionsObserver{m_docsEditor->getEditor(), this};editor->setDocumentTitle("Example title");
     setCentralWidget(m_docsEditor);
     m_textObserver = new TextChangeObserver{ editor, 10 };
