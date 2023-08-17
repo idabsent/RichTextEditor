@@ -42,12 +42,11 @@ struct Action;
 using MementoUP = std::unique_ptr<Memento>;
 using ActionUP = std::unique_ptr<Action>;
 
-struct MementoBuilder
+struct MementoDeserializer
 {
-    virtual ~MementoBuilder() = default;
-    virtual bool supportAction(ActionType action) const = 0;
-    virtual ActionUP buildAction(MementoUP memento) = 0;
-    virtual MementoUP buildMemento(QByteArray&& data, ActionType action) = 0;
+    virtual ~MementoDeserializer() = default;
+    virtual bool actionIsSupported(ActionType action) const = 0;
+    virtual ActionUP deserializeAction(QByteArray&& data, ActionType action) = 0;
 };
 
 struct Action

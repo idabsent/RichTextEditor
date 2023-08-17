@@ -56,32 +56,23 @@ inline int generate_random(int beg, int end = std::numeric_limits<int>::max())
 	return dstr(dev);
 }
 
-//TODO fix it
 template<size_t Ind = 0, typename... TItems, typename Func>
-typename std::enable_if<Ind == sizeof...(TItems), void>::type tuple_for_each(std::tuple<TItems...>& items, Func func)
+void tuple_for_each(std::tuple<TItems...>& items, Func func)
 {
-
+    if constexpr (Ind < sizeof...(TItems))
+    {
+        func(std::get<Ind>(items));
+        tuple_for_each<Ind + 1, TItems...>(items, func);
+    }
 }
 
 template<size_t Ind = 0, typename... TItems, typename Func>
-typename std::enable_if<Ind < sizeof...(TItems), void>::type tuple_for_each(std::tuple<TItems...>& items, Func func)
+void tuple_for_each(std::tuple<TItems...> const& items, Func func)
 {
-	func(std::get<Ind>(items));
-	tuple_for_each<Ind + 1, TItems..., Func>(items, func);
-}
-
-//TODO fix it
-template<size_t Ind = 0, typename... TItems, typename Func>
-typename std::enable_if<Ind == sizeof...(TItems), void>::type tuple_for_each(std::tuple<TItems...> const& items, Func func)
-{
-
-}
-
-template<size_t Ind = 0, typename... TItems, typename Func>
-typename std::enable_if < Ind < sizeof...(TItems), void>::type tuple_for_each(std::tuple<TItems...> const& items, Func func)
-{
-	func(std::get<Ind>(items));
-	tuple_for_each<Ind + 1, TItems..., Func>(items, func);
+    if constexpr (Ind < sizeof...(TItems)) {
+        func(std::get<Ind>(items));
+        tuple_for_each<Ind + 1, TItems...>(items, func);
+    }
 }
 
 }

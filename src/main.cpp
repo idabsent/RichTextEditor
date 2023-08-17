@@ -271,6 +271,7 @@ auto CLIApplication::process() -> void
         m_parser.addOption(option.get());
     }
 
+
     m_parser.process(m_app);
 
     std::vector<std::reference_wrapper<Option>> exist_options;

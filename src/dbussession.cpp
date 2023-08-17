@@ -71,6 +71,7 @@ void DBusSession::createSession(QString const& session)
 
     _instance = new DBusSession{};
 	auto interaction = new EnabledInteraction{ _instance };
+    interaction->initInstance(session);
 	_instance->m_interaction = interaction;
 	connect(_instance->m_interaction, &EnabledInteraction::messageReceived, _instance, &DBusSession::parseMessage);
 }

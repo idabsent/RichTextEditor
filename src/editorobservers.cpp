@@ -92,10 +92,9 @@ void DBusActionsObserver::onDataReceived(ActionType type, QByteArray const& raw)
     auto data = raw;
 
     auto builder = GlobalMementoBuilder::instance();
-    if (builder->supportAction(type))
+    if (builder->actionIsSupported(type))
     {
-        auto memento = builder->buildMemento(std::move(data), type);
-        auto action = builder->buildAction(std::move(memento));
+        auto action = builder->deserializeAction(std::move(data), type);
         action->execute();
     }
 }

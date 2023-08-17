@@ -18,8 +18,8 @@ struct StreamItemsMemento : public Memento
         : m_items{ Items{}... }
     {   }
 
-	StreamItemsMemento(Items... items)
-		: m_items{ std::move(items)... }
+    StreamItemsMemento(Items... items)
+        : m_items{ std::forward<decltype(items)>(items)... }
 	{	}
 
 	QByteArray toRaw() const override
@@ -27,7 +27,12 @@ struct StreamItemsMemento : public Memento
 		QByteArray raw;
 		QDataStream rawStream{ &raw, QIODevice::WriteOnly };
 
-		writeToStream(rawStream, m_items);
+        //writeToStream(rawStream, m_items);
+        tools::tuple_for_each(m_items, [&rawStream](auto const& item)
+            {
+                rawStream << item;
+            }
+        );
 
 		return raw;
 	}
@@ -35,29 +40,11 @@ struct StreamItemsMemento : public Memento
 	void initFromRaw(QByteArray&& raw) override
 	{
 		QDataStream rawStream{ &raw, QIODevice::ReadOnly };
-		readFromStream(rawStream, m_items);
-	}
-
-private:
-	template<size_t Ind = 0, typename... Tpl>
-	typename std::enable_if<Ind == sizeof...(Tpl), void>::type writeToStream(QDataStream& str, std::tuple<Tpl...> const& tpl) const
-	{	}
-
-	template<size_t Ind = 0, typename... Tpl>
-	typename std::enable_if < Ind < sizeof...(Tpl), void>::type writeToStream(QDataStream& str, std::tuple<Tpl...> const& tpl) const
-	{
-		str << std::get<Ind>(tpl);
-		writeToStream<Ind + 1, Tpl...>(str, tpl);
-	}
-
-	template<size_t Ind = 0, typename... Tpl>
-	void readFromStream(QDataStream& str, std::tuple<Tpl...>& tpl)
-	{
-		if constexpr (Ind < sizeof...(Tpl))
-		{
-			str >> std::get<Ind>(tpl);
-			readFromStream<Ind + 1, Tpl...>(str, tpl);
-		}
+        tools::tuple_for_each(m_items, [&rawStream](auto& item)
+            {
+                rawStream >> item;
+            }
+        );
 	}
 
 protected:
@@ -75,18 +62,30 @@ struct EmptyMemento : public Memento
 	{	}
 };
 
-struct GlobalMementoBuilder : public MementoBuilder
+struct GlobalMementoBuilder : public MementoDeserializer
 {
-	bool supportAction(ActionType action) const override;
-	ActionUP buildAction(MementoUP memento) override;
-	MementoUP buildMemento(QByteArray&& data, ActionType action) override;
+	bool actionIsSupported(ActionType action) const override;
+	ActionUP deserializeAction(QByteArray&& data, ActionType type) override;
 
     static void createInstance(EditorTabWidget* docsEditor);
     static GlobalMementoBuilder* instance();
 
 private:
     static std::unique_ptr<GlobalMementoBuilder> _instance;
+
     GlobalMementoBuilder(EditorTabWidget* docsEditor);
+
+	template<typename ActionT, typename MementoT, typename... Args>
+	ActionUP build(QByteArray&& data, Args... actionArg) const
+	{
+		auto memento = std::make_unique<MementoT>();
+		memento->initFromRaw(std::move(data));
+		
+		auto action = std::unique_ptr<ActionT>{ new ActionT{std::forward<decltype(actionArg)>(actionArg)...} };
+		action->setMemento(std::move(memento));
+
+		return action;
+	}
 
     EditorTabWidget* m_docsEditor;
 };
@@ -294,10 +293,10 @@ struct TextChangeAction : public Action
     TextChangeAction(TextChangeType type, QChar const& chr, QTextEdit* textEditor);
 
 	void execute() override;
-    const Memento* getMemento() const;
+    const Memento* getMemento() const override;
 
 protected:
-    void setMemento(MementoUP memento);
+    void setMemento(MementoUP memento) override;
 
 private:
 	friend struct GlobalMementoBuilder;
@@ -456,7 +455,7 @@ struct CommonAction : public Action
 {
 	struct MementoInner : public StreamItemsMemento<Types...>
 	{
-		using StreamItemsMemento::StreamItemsMemento;
+		using StreamItemsMemento<Types...>::StreamItemsMemento;
 
 		ActionType getActionType() const override
 		{
@@ -488,18 +487,18 @@ struct CommonAction : public Action
 			return;
 		}
 
-		throwInvalidMemento(casted);
+        throwInvalidMemento(memento);
 	}
 
 protected:
 	template<size_t Pos>
-	std::tuple_element_t<Pos, decltype(StreamItemsMemento<Types...>::m_items)> getMementoItem()
+	std::tuple_element_t<Pos, std::tuple<Types...>> getMementoItem()
 	{
 		return std::get<Pos>(m_memento->m_items);
 	}
 
 	template<size_t Pos>
-	void setMementoItem(std::tuple_element_t<Pos, decltype(StreamItemsMemento<Types...>::m_items)> item)
+	void setMementoItem(std::tuple_element_t<Pos, std::tuple<Types...>> item)
 	{
 		std::get<Pos>(m_memento->m_items) = item;
 	}

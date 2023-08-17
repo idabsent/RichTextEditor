@@ -18,7 +18,7 @@ GlobalMementoBuilder::GlobalMementoBuilder(EditorTabWidget* docsEditor)
     : m_docsEditor{docsEditor}
 {	}
 
-bool GlobalMementoBuilder::supportAction(ActionType action) const
+bool GlobalMementoBuilder::actionIsSupported(ActionType action) const
 {
 	switch (action)
 	{
@@ -50,269 +50,61 @@ bool GlobalMementoBuilder::supportAction(ActionType action) const
 }
 
 //TODO enable support other action mementos
-MementoUP GlobalMementoBuilder::buildMemento(QByteArray&& data, ActionType action)
+ActionUP GlobalMementoBuilder::deserializeAction(QByteArray&& data, ActionType type)
 {
-	MementoUP memento;
-
-	switch (action)
+	switch (auto editor = m_docsEditor->getEditor(); type)
 	{
     case ActionType::FormatBold:
-        memento.reset(new BoldMemento);
-        break;
-	case ActionType::FormatItalic:
-        memento.reset(new ItalicMemento);
-        break;
+        return build<FormatBold, BoldMemento>(std::move(data), editor);
+    case ActionType::FormatItalic:
+        return build<FormatItalic, ItalicMemento>(std::move(data), editor);
 	case ActionType::FormatUnderline:
-        memento.reset(new UnderlineMemento);
-        break;
+        return build<FormatUnderline, UnderlineMemento>(std::move(data), editor);
 	case ActionType::FormatAlignLeft:
-        memento.reset(new AlignLeftMemento);
-        break;
+        return build<FormatAlignLeft, AlignLeftMemento>(std::move(data), editor);
 	case ActionType::FormatAlignRight:
-        memento.reset(new AlignRightMemento);
-        break;
+        return build<FormatAlignRight, AlignRightMemento>(std::move(data), editor);
 	case ActionType::FormatAlignCenter:
-        memento.reset(new AlignCenterMemento);
-        break;
+        return build<FormatAlignCenter, AlignCenterMemento>(std::move(data), editor);
 	case ActionType::FormatAlignJustify:
-        memento.reset(new AlignJustifyMemento);
-        break;
+        return build<FormatAlignJustify, AlignJustifyMemento>(std::move(data), editor);
     case ActionType::FormatIndent:
 	case ActionType::FormatUnindent:
-        memento.reset(new IndentMemento);
-        break;
+        return build<FormatIndent, IndentMemento>(std::move(data), editor);
 	case ActionType::FormatColor:
-        memento.reset(new ColorMemento);
-        break;
+        return build<FormatColor, ColorMemento>(std::move(data), editor);
 	case ActionType::FormatUnderlineColor:
-        memento.reset(new UnderlineColorMemento);
-        break;
+        return build<FormatUnderlineColor, UnderlineColorMemento>(std::move(data), editor);
     case ActionType::FileOpen:
-        memento.reset(new FileOpenMemento);
-        break;
+        return build<FileOpenAction, FileOpenMemento>(std::move(data), m_docsEditor);
     case ActionType::FileSave:
-        memento.reset(new FileSaveMemento);
-        break;
+        return build<FileSaveAction, FileSaveMemento>(std::move(data), m_docsEditor);
     case ActionType::FileSaveAs:
-        memento.reset(new FileSaveAsMemento);
-        break;
+        return build<FileSaveAsAction, FileSaveAsMemento>(std::move(data), m_docsEditor);
     case ActionType::DocNew:
-        memento.reset(new DocNewMemento);
-        break;
+        return build<DocNewAction, DocNewMemento>(std::move(data), m_docsEditor);
     case ActionType::EditCopy:
-        memento.reset(new EditCopyMemento);
-        break;
+        return build<EditCopyAction, EditCopyMemento>(std::move(data), editor);
     case ActionType::EditPaste:
-        memento.reset(new EditPasteMemento);
-        break;
+        return build<EditPasteAction, EditPasteMemento>(std::move(data), editor);
     case ActionType::EditCut:
-        memento.reset(new EditCutMemento);
-        break;
+        return build<EditCutAction, EditCutMemento>(std::move(data), editor);
     case ActionType::EditUndo:
-        memento.reset(new EditUndoMemento);
-        break;
+        return build<EditUndoAction, EditUndoMemento>(std::move(data), editor);
     case ActionType::EditRedo:
-        memento.reset(new EditRedoMemento);
-        break;
+        return build<EditRedoAction, EditRedoMemento>(std::move(data), editor);
     case ActionType::FontSize:
-        memento.reset(new SizeMemento);
-        break;
+        return build<FormatSize, SizeMemento>(std::move(data), editor);
     case ActionType::FontFamily:
-        memento.reset(new FamilyMemento);
-        break;
+        return build<FormatFamily, FamilyMemento>(std::move(data), editor);
     case ActionType::TextChange:
-        memento.reset(new TextChangeAction_1::MementoInner);
-        break;
+        return build<TextChangeAction_1, TextChangeAction_1::MementoInner>(std::move(data), editor);
     default:
         auto errorMsg = QString{"%1: Attemption build memento from unsupported ActionType{%2}"}
                 .arg(FUNC_SIGN)
-                .arg(static_cast<int>(action));
-
+                .arg(static_cast<int>(type));
         throw std::logic_error{errorMsg.toStdString()};
 	}
-
-    memento->initFromRaw(std::move(data));
-
-    return memento;
-}
-
-ActionUP GlobalMementoBuilder::buildAction(MementoUP memento)
-{
-    ActionUP action;
-
-    switch(memento->getActionType())
-    {
-    case ActionType::FormatBold:
-    {
-        auto o_action = new FormatBold{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatItalic:
-    {
-        auto o_action = new FormatItalic{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatUnderline:
-    {
-        auto o_action = new FormatUnderline{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatAlignLeft:
-    {
-        auto o_action = new FormatAlignLeft{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatAlignRight:
-    {
-        auto o_action = new FormatAlignRight{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatAlignCenter:
-    {
-        auto o_action = new FormatAlignCenter{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatAlignJustify:
-    {
-        auto o_action = new FormatAlignJustify{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatIndent:
-    case ActionType::FormatUnindent:
-    {
-        auto o_action = new FormatIndent{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatColor:
-    {
-        auto o_action = new FormatColor{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatUnderlineColor:
-    {
-        auto o_action = new FormatColor{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FormatChecked:
-    {
-        auto o_action = new FormatChecked{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FileOpen:
-    {
-        auto o_action = new FileOpenAction{m_docsEditor};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FileSave:
-    {
-        auto o_action = new FileSaveAction{m_docsEditor};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FileSaveAs:
-    {
-        auto o_action = new FileSaveAsAction{m_docsEditor};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::EditCopy:
-    {
-        auto o_action = new EditCopyAction{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::EditCut:
-    {
-        auto o_action = new EditCutAction{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::EditPaste:
-    {
-        auto o_action = new EditPasteAction{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::EditUndo:
-    {
-        auto o_action = new EditUndoAction{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::EditRedo:
-    {
-        auto o_action = new EditRedoAction{m_docsEditor->getEditor()};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FontSize:
-    {
-        auto o_action = new FormatSize{ m_docsEditor->getEditor() };
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::DocNew:
-    {
-        auto o_action = new DocNewAction{m_docsEditor};
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::FontFamily:
-    {
-        auto o_action = new FormatFamily{ m_docsEditor->getEditor() };
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    case ActionType::TextChange:
-    {
-        auto o_action = new TextChangeAction_1{ m_docsEditor->getEditor() };
-        o_action->setMemento(std::move(memento));
-        action.reset(o_action);
-        break;
-    }
-    default:
-        auto errorMsg = QString{"%1: Attemption build action from unsupported ActionType{%2}"}
-                .arg(FUNC_SIGN)
-                .arg(static_cast<int>(memento->getActionType()));
-
-        throw std::logic_error{errorMsg.toStdString()};
-    }
-
-    return action;
 }
 
 void GlobalMementoBuilder::createInstance(EditorTabWidget* docsEditor)
