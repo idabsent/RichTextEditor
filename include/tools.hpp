@@ -35,6 +35,18 @@ std::unique_ptr<To, Deleter> unique_dyn_cast(std::unique_ptr<From, Deleter>&& pt
 	return std::unique_ptr<To>(nullptr);
 }
 
+template<typename To, typename From>
+std::unique_ptr<To> unique_dyn_cast_new(std::unique_ptr<From>&& ptr)
+{
+	if (auto to = dynamic_cast<To*>(ptr.get()))
+	{
+		auto casted = std::unique_ptr<To>(to);
+		ptr.release();
+		return std::move(casted);
+	}
+
+	return std::unique_ptr<To>(nullptr);
+}
 
 inline int generate_random(int beg, int end = std::numeric_limits<int>::max())
 {

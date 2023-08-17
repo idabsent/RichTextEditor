@@ -34,6 +34,7 @@ auto EditorTabWidget::addDocument(QString const& title, QTextDocument* doc, bool
     m_textEditor->setDocument(doc);
     m_textEditor->setDocumentTitle(title);
     m_tabs->setCurrentIndex(m_tabs->count() - 1);
+
 }
 
 auto EditorTabWidget::changeCurrentTitle(QString const& newTitle) -> void

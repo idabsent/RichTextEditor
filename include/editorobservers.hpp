@@ -4,8 +4,9 @@
 
 #include "actions.hpp"
 
-struct AdditionalEmiterTextEditor : public QTextEdit
+class AdditionalEmiterTextEditor : public QTextEdit
 {
+public:
 	using QTextEdit::QTextEdit;
 
 signals:

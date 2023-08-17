@@ -65,7 +65,7 @@ void TextChangeObserver::onSymAdded(QChar const& sym)
 {
     auto dbusSession = DBusSession::instance();
     auto action = std::unique_ptr<Action>{
-        new TextChangeAction{ TextChangeType::Added, sym, m_editor }
+        new TextChangeAction_1{TextChangeType::Added, sym, m_editor }
     };
     dbusSession->sendAction(std::move(action));
 }
@@ -74,7 +74,7 @@ void TextChangeObserver::onSymRemoved(QChar const& sym)
 {
     auto dbusSession = DBusSession::instance();
     auto action = std::unique_ptr<Action>{
-        new TextChangeAction{TextChangeType::Removed, sym, m_editor}
+        new TextChangeAction_1{TextChangeType::Removed, sym, m_editor}
     };
     dbusSession->sendAction(std::move(action));
 }

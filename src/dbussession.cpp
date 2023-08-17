@@ -60,10 +60,18 @@ DBusSession::DBusSession()
 
 void DBusSession::createSession(QString const& session)
 {
+	if (_instance)
+	{
+		throw std::logic_error{
+			QString{"%1: Attemption create exist instance"}
+				.arg(FUNC_SIGN)
+				.toStdString()
+		};
+	}
+
     _instance = new DBusSession{};
 	auto interaction = new EnabledInteraction{ _instance };
 	_instance->m_interaction = interaction;
-    interaction->initInstance(session);
 	connect(_instance->m_interaction, &EnabledInteraction::messageReceived, _instance, &DBusSession::parseMessage);
 }
 

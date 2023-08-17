@@ -51,14 +51,13 @@ private:
 	}
 
 	template<size_t Ind = 0, typename... Tpl>
-	typename std::enable_if<Ind == sizeof...(Tpl), void>::type readFromStream(QDataStream& str, std::tuple<Tpl...>& tpl)
-	{	}
-
-	template<size_t Ind = 0, typename... Tpl>
-	typename std::enable_if < Ind < sizeof...(Tpl), void>::type readFromStream(QDataStream& str, std::tuple<Tpl...>& tpl)
+	void readFromStream(QDataStream& str, std::tuple<Tpl...>& tpl)
 	{
-		str >> std::get<Ind>(tpl);
-		readFromStream<Ind + 1, Tpl...>(str, tpl);
+		if constexpr (Ind < sizeof...(Tpl))
+		{
+			str >> std::get<Ind>(tpl);
+			readFromStream<Ind + 1, Tpl...>(str, tpl);
+		}
 	}
 
 protected:
@@ -452,6 +451,100 @@ private:
     friend struct GlobalMementoBuilder;
 };
 
+template<ActionType action, typename... Types>
+struct CommonAction : public Action
+{
+	struct MementoInner : public StreamItemsMemento<Types...>
+	{
+		using StreamItemsMemento::StreamItemsMemento;
+
+		ActionType getActionType() const override
+		{
+			return action;
+		}
+
+		friend struct CommonAction;
+	};
+
+	using MementoInnerUP = std::unique_ptr<MementoInner, std::default_delete<Memento>>;
+
+	CommonAction() = default;
+	CommonAction(Types... args)
+		: m_memento{std::make_unique<MementoInner>(args...)}
+	{	}
+
+	const Memento* getMemento() const override
+	{
+		return m_memento.get();
+	}
+
+	void setMemento(MementoUP memento) override
+	{
+		auto casted = tools::unique_dyn_cast<MementoInner>(std::move(memento));
+
+		if (casted)
+		{
+			m_memento = std::move(casted);
+			return;
+		}
+
+		throwInvalidMemento(casted);
+	}
+
+protected:
+	template<size_t Pos>
+	std::tuple_element_t<Pos, decltype(StreamItemsMemento<Types...>::m_items)> getMementoItem()
+	{
+		return std::get<Pos>(m_memento->m_items);
+	}
+
+	template<size_t Pos>
+	void setMementoItem(std::tuple_element_t<Pos, decltype(StreamItemsMemento<Types...>::m_items)> item)
+	{
+		std::get<Pos>(m_memento->m_items) = item;
+	}
+
+	MementoInnerUP m_memento;
+};
+
+struct TextChangeAction_1 : public CommonAction<ActionType::TextChange, int, int, QChar>
+{
+	TextChangeAction_1(QTextEdit* textEditor)
+		: CommonAction{}
+		, m_textEditor{textEditor}
+	{	}
+
+	TextChangeAction_1(TextChangeType type, QChar const& chr, QTextEdit* textEditor)
+		: CommonAction{ 
+			textEditor->textCursor().position(), static_cast<int>(type), chr}
+		, m_textEditor{textEditor}
+	{	}
+
+	void execute() override
+	{
+		auto m_pos = getMementoItem<0>();
+		auto action = static_cast<TextChangeType>(getMementoItem<1>());
+		auto m_chr = getMementoItem<2>();
+
+		auto cursor = m_textEditor->textCursor();
+		cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+		cursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, m_pos);
+
+		switch (action)
+		{
+		case TextChangeType::Added:
+			cursor.insertText(QString{ m_chr });
+			break;
+		case TextChangeType::Removed:
+			cursor.deleteChar();
+			break;
+		}
+	}
+
+private:
+	QTextEdit* m_textEditor;
+};
+
 struct EditCutMemento : public StreamItemsMemento<int, int>
 {
     EditCutMemento() = default;
@@ -460,7 +553,7 @@ struct EditCutMemento : public StreamItemsMemento<int, int>
     ActionType getActionType() const override;
 };
 
-using EditCutMementoUP = std::unique_ptr<EditCutMemento, std::default_delete<Memento>>;
+using EditCutMementoUP = std::unique_ptr<EditCutMemento>;
 
 struct EditCutAction : public Action
 {

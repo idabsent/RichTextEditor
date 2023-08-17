@@ -296,7 +296,8 @@ void RichTextEditor::buildEditorAndObjects()
     auto editor = new AdditionalEmiterTextEditor;
     m_docsEditor = new EditorTabWidget{ editor };
     GlobalMementoBuilder::createInstance(m_docsEditor);
-    m_actionsObserver = new DBusActionsObserver{m_docsEditor->getEditor(), this};editor->setDocumentTitle("Example title");
+    m_actionsObserver = new DBusActionsObserver{m_docsEditor->getEditor(), this};
+    editor->setDocumentTitle("Example title");
     setCentralWidget(m_docsEditor);
     m_textObserver = new TextChangeObserver{ editor, 10 };
 }

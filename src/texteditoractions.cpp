@@ -121,7 +121,7 @@ MementoUP GlobalMementoBuilder::buildMemento(QByteArray&& data, ActionType actio
         memento.reset(new FamilyMemento);
         break;
     case ActionType::TextChange:
-        memento.reset(new TextChangeMemento);
+        memento.reset(new TextChangeAction_1::MementoInner);
         break;
     default:
         auto errorMsg = QString{"%1: Attemption build memento from unsupported ActionType{%2}"}
@@ -299,7 +299,7 @@ ActionUP GlobalMementoBuilder::buildAction(MementoUP memento)
     }
     case ActionType::TextChange:
     {
-        auto o_action = new TextChangeAction{ m_docsEditor->getEditor() };
+        auto o_action = new TextChangeAction_1{ m_docsEditor->getEditor() };
         o_action->setMemento(std::move(memento));
         action.reset(o_action);
         break;
@@ -960,7 +960,7 @@ const Memento* EditCutAction::getMemento() const
 
 void EditCutAction::setMemento(MementoUP memento)
 {
-    auto casted = tools::unique_dyn_cast<EditCutMemento>(std::move(memento));
+    auto casted = tools::unique_dyn_cast_new<EditCutMemento>(std::move(memento));
 
     if (casted)
     {
