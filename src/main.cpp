@@ -52,6 +52,9 @@ auto main(int argc, char* argv[]) -> int
     try
     {
         CLIApplication cliApp{ app };
+        cliApp.setApplicationDescription(PROJECT_DESCRIPTION);
+        cliApp.setApplicationVersion(PROJECT_VERSION);
+        cliApp.setApplicationName(PROJECT_NAME);
 
         QCommandLineOption detached{
                     QApplication::tr("detached"),
